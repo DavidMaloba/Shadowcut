@@ -55,19 +55,19 @@ input:focus{border-color:var(--blue);box-shadow:0 0 14px rgba(90,209,255,.4)}
 </main>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getFirestore,collection,doc,onSnapshot,writeBatch,deleteDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {initializeFirestore,collection,doc,onSnapshot,writeBatch,deleteDoc,setDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 const firebaseConfig={apiKey:"AIzaSyAidgt3rikSifEM0gnZwQ6WI9NrtW_5iy8",authDomain:"shadowcut-21fd6.firebaseapp.com",projectId:"shadowcut-21fd6",storageBucket:"shadowcut-21fd6.firebasestorage.app",messagingSenderId:"129870914394",appId:"1:129870914394:web:bd99019dc89711015b0963"};
-const app=initializeApp(firebaseConfig),db=getFirestore(app),auth=getAuth(app);
+const app=initializeApp(firebaseConfig),db=initializeFirestore(app,{experimentalAutoDetectLongPolling:true}),auth=getAuth(app);
 const $=s=>document.querySelector(s);
 const D={
 barber:{n:"Barber shop",s:[["Classic haircut",500,"30 min"],["Fade and beard",800,"45 min"],["Beard trim",300,"20 min"],["Kids cut",350,"25 min"],["Hot towel shave",400,"25 min"]],t:[["Kai","S-rank"],["Dante","A-rank"],["Ryu","B-rank"]]},
 salon:{n:"Salon",s:[["Wash and blow-dry",1200,"60 min"],["Knotless braids",3000,"3 hrs"],["Hair colour",3500,"2 hrs"],["Manicure",800,"45 min"],["Facial",1500,"50 min"]],t:[["Mira","S-rank"],["Zara","A-rank"],["Lena","B-rank"]]}};
 const T=[];for(let h=9;h<18;h++){T.push(h+":00".padStart(0));T.push(h+":30")}
 const pad=t=>t.length<5?"0"+t:t;
-let B=[],TK=new Set(),user=null,unsub=null;const OWN="dmaloba903@gmail.com";const isOwner=()=>!!user&&user.email==OWN;
-onSnapshot(collection(db,"slots"),sn=>{TK=new Set(sn.docs.map(x=>x.id));R()},()=>{});
-onAuthStateChanged(auth,u=>{user=u;if(unsub){unsub();unsub=null}B=[];if(isOwner()){unsub=onSnapshot(collection(db,"bookings"),sn=>{B=sn.docs.map(x=>({id:x.id,...x.data()}));R()},()=>{})}R()});
+let B=[],TK=new Set(),user=null,unsub=null,NET="",blk=false,bs="Kai",bd=null;const OWN="dmaloba903@gmail.com";const isOwner=()=>!!user&&user.email==OWN;
+onSnapshot(collection(db,"slots"),sn=>{TK=new Set(sn.docs.map(x=>x.id));R()},e=>{NET="Cannot read the database ("+(e.code||"error")+"). Refresh the page.";R()});
+onAuthStateChanged(auth,u=>{user=u;if(unsub){unsub();unsub=null}B=[];if(isOwner()){unsub=onSnapshot(collection(db,"bookings"),sn=>{B=sn.docs.map(x=>({id:x.id,...x.data()}));R()},e=>{NET="Could not load bookings ("+(e.code||"error")+")";R()})}R()});
 
 let me={};try{me=JSON.parse(localStorage.getItem("sc_me")||"{}")}catch(e){}
 const q=x=>String(x||"").replace(/["<>&]/g,"");
@@ -77,14 +77,20 @@ const sid=(d,st,t)=>d+"_"+st+"_"+t;const taken=(d,st,t)=>TK.has(sid(d,st,t));
 const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const days=()=>Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()+i);return d});
 const lab=d=>new Date(d+"T12:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+const wa=b=>{let n=String(b.ph).replace(/\D/g,"");if(n.startsWith("0"))n="254"+n.slice(1);else if(n.length==9)n="254"+n;return "https://wa.me/"+n+"?text="+encodeURIComponent("Hi "+b.nm+", reminder from SHADOWCUT: "+b.sv+" with "+b.st+" on "+lab(b.d)+" at "+b.t+". See you then! Code "+b.code)};
 const past=(d,t)=>d==iso(new Date())&&new Date(d+"T"+pad(t))<new Date();
 const bar=()=>'<div class="bar">'+[0,1,2,3,4].map(i=>'<b class="'+(i<=s.k?"on":"")+'"></b>').join("")+"</div>";
 const back=()=>s.k>0?'<button class="link" data-a="back">Back</button>':"";
-function R(){const v=$("#v");let h="";
+function BLK(){const all=[...D.barber.t,...D.salon.t].map(x=>x[0]);
+let h='<h2>Block off times</h2><div class="days">'+all.map(n=>'<button class="opt '+(bs==n?"sel":"")+'" data-a="bs" data-v="'+n+'">'+n+'</button>').join("")+'</div><div class="days">'+days().map(d=>'<button class="opt '+(bd==iso(d)?"sel":"")+'" data-a="bd" data-v="'+iso(d)+'">'+d.toLocaleDateString("en-GB",{weekday:"short"})+"<small>"+d.getDate()+"</small></button>").join("")+'</div><div class="grid times">';
+h+=T.map(t=>{const id=sid(bd,bs,t),bk=B.some(b=>b.d==bd&&b.st==bs&&b.t==t),on=TK.has(id);return '<button class="opt '+(on&&!bk?"sel":"")+'" data-a="tg" data-v="'+t+'" '+(bk?"disabled":"")+'>'+t+'<small>'+(bk?"booked":on?"blocked":"open")+'</small></button>'}).join("");
+return h+'</div><p>Tap a time to block or unblock it for the stylist and day chosen.</p><div style="margin-top:12px"><button class="btn" data-a="bday">Block whole day</button></div><p><button class="link" data-a="blkx">Back to bookings</button></p>'}
+function R(){const v=$("#v");let h="";const a1=$("#nm"),a2=$("#ph"),vn=a1?a1.value:null,vp=a2?a2.value:null;
 if(adm&&!isOwner()){h='<h2>Owner sign-in</h2><p>'+(user?'This account is not the owner.':'Sign in with the owner Google account to see bookings.')+'</p><button class="btn" data-a="'+(user?'out':'in')+'">'+(user?'Sign out':'Sign in with Google')+'</button><p><button class="link" data-a="exit">Back to booking</button></p>'}
+else if(adm&&blk){h=BLK()}
 else if(adm){h='<h2>Owner view: all bookings</h2><div class="sum"><b>'+B.length+'</b> bookings, expected income <b>KSh '+B.reduce((a,b)=>a+(b.p||0),0)+'</b></div>';const L=[...B].sort((a,b)=>(a.d+pad(a.t)).localeCompare(b.d+pad(b.t)));
-h+=L.length?L.map((b,i)=>'<div class="row"><div><b>'+lab(b.d)+" "+b.t+"</b> with "+b.st+"<br>"+b.sv+" for "+b.nm+" ("+b.ph+")</div><button class='link' data-a='del' data-i='"+B.indexOf(b)+"'>Cancel</button></div>").join(""):"<p>No bookings yet. New ones show up here.</p>";
-h+='<div style="margin-top:12px"><button class="btn" data-a="exit">Back to booking</button></div>'}
+h+=L.length?L.map((b,i)=>'<div class="row"><div><b>'+lab(b.d)+" "+b.t+"</b> with "+b.st+"<br>"+b.sv+" for "+b.nm+" ("+b.ph+")</div><div><a class='link' target='_blank' rel='noopener' href='"+wa(b)+"'>WhatsApp</a><br><button class='link' data-a='del' data-i='"+B.indexOf(b)+"'>Cancel</button></div></div>").join(""):"<p>No bookings yet. New ones show up here.</p>";
+h+='<div style="margin-top:12px"><button class="btn" data-a="blk">Block off times</button></div><div style="margin-top:12px"><button class="btn" data-a="exit">Back to booking</button></div>'}
 else if(s.k==5){h='<h2>Quest accepted</h2><p>You are booked. Show this code at the door.</p><div class="code">'+s.code+'</div><div class="sum"><b>'+s.sv+"</b><br>"+s.st+", "+lab(s.d)+" at "+s.t+'</div><button class="btn" data-a="reset">Book another</button><p style="text-align:center"><a class="link" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent("My appointment at SHADOWCUT: "+s.sv+" with "+s.st+", "+lab(s.d)+" at "+s.t+". Code "+s.code)+'">Share on WhatsApp</a></p>'}
 else{h=bar();
 if(s.k==0)h+='<h2>Choose your arena</h2><div class="grid g2"><button class="opt big" data-a="cat" data-v="barber">Barber shop<span>Cuts, fades, beards</span></button><button class="opt big" data-a="cat" data-v="salon">Salon<span>Hair, nails, skin</span></button></div>';
@@ -94,7 +100,7 @@ if(s.k==3){h+="<h2>Pick a time</h2><div class='days'>"+days().map(d=>'<button cl
 if(s.d)h+="<div class='grid times'>"+T.map(t=>'<button class="opt '+(s.t==t?"sel":"")+'" data-a="time" data-v="'+t+'" '+(taken(s.d,s.st,t)||past(s.d,t)?"disabled":"")+">"+t+"</button>").join("")+"</div>";else h+="<p>Select a day to see open slots.</p>";
 h+='<div style="margin-top:14px"><button class="btn" data-a="next" '+(s.t?"":"disabled")+">Continue</button></div>"+back()}
 if(s.k==4)h+='<h2>Your details</h2><div class="sum"><b>'+s.sv+"</b> (KSh "+s.p+")<br>"+s.st+", "+lab(s.d)+" at "+s.t+'</div><input id="nm" placeholder="Your name" autocomplete="name" value="'+q(me.nm)+'"><input id="ph" placeholder="Phone number" inputmode="tel" autocomplete="tel" value="'+q(me.ph)+'"><div class="err" id="er"></div><button class="btn" data-a="ok">Confirm booking</button>'+back()}
-v.innerHTML=h}
+v.innerHTML=(NET?'<p class="err">'+NET+"</p>":"")+h;if(vn!==null&&$("#nm")){$("#nm").value=vn;$("#ph").value=vp}}
 $("#v").addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b||b.disabled)return;const a=b.dataset.a,v=b.dataset.v,i=b.dataset.i;
 if(a=="cat"){s.c=v;s.k=1}
 else if(a=="svc"){s.sv=D[s.c].s[i][0];s.p=D[s.c].s[i][1];s.k=2}
@@ -109,10 +115,16 @@ if(taken(s.d,s.st,s.t)){$("#er").textContent="That slot was just taken. Go back 
 s.code="SC-"+Math.random().toString(36).slice(2,6).toUpperCase();const bt=writeBatch(db);bt.set(doc(db,"slots",sid(s.d,s.st,s.t)),{d:s.d,st:s.st,t:s.t});bt.set(doc(collection(db,"bookings")),{d:s.d,t:s.t,st:s.st,sv:s.sv,p:s.p,nm,ph,code:s.code,at:Date.now()});
 me={nm,ph};try{localStorage.setItem("sc_me",JSON.stringify(me))}catch(e){}
 $("#er").textContent="Booking...";
-bt.commit().then(()=>{erupt();s.k=5;R()}).catch(()=>{$("#er").textContent="That slot was just taken or the connection failed. Go back and pick another."});return}
+Promise.race([bt.commit(),new Promise((_,r)=>setTimeout(()=>r({code:"timeout"}),12000))]).then(()=>{erupt();s.k=5;R()}).catch(e=>{const c=e&&e.code||"error";const er=$("#er");if(er)er.textContent=c=="timeout"?"Cannot reach the server. Check your internet or try Chrome on another network. (timeout)":c=="permission-denied"?"That slot was just taken. Go back and pick another. (permission-denied)":"Booking failed ("+c+")."});return}
 else if(a=="reset"){s={k:0,c:null,sv:null,st:null,d:null,t:null,code:null}}
 else if(a=="del"){const b=B[+i];deleteDoc(doc(db,"bookings",b.id));deleteDoc(doc(db,"slots",sid(b.d,b.st,b.t)));return}
-else if(a=="in"){signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{});return}
+else if(a=="blk"){blk=true;bd=iso(new Date())}
+else if(a=="blkx"){blk=false}
+else if(a=="bs"){bs=v}
+else if(a=="bd"){bd=v}
+else if(a=="tg"){const id=sid(bd,bs,v);if(TK.has(id))deleteDoc(doc(db,"slots",id));else setDoc(doc(db,"slots",id),{d:bd,st:bs,t:v});return}
+else if(a=="bday"){const bt=writeBatch(db);T.forEach(x=>{const id=sid(bd,bs,x);if(!TK.has(id))bt.set(doc(db,"slots",id),{d:bd,st:bs,t:x})});bt.commit();return}
+else if(a=="in"){NET="";signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>{NET="Sign-in failed ("+(e.code||"error")+")";R()});return}
 else if(a=="out"){signOut(auth);return}
 else if(a=="exit"){adm=false}
 R()});
