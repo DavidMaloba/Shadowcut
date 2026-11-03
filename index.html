@@ -67,6 +67,7 @@ const T=[];for(let h=9;h<18;h++){T.push(h+":00".padStart(0));T.push(h+":30")}
 const pad=t=>t.length<5?"0"+t:t;
 let B=[],TK=new Set(),user=null,unsub=null,NET="",blk=false,bs="Kai",bd=null,edt=false,ED=null;const OWN="dmaloba903@gmail.com";const isOwner=()=>!!user&&user.email==OWN;
 onSnapshot(doc(db,"config","shop"),sn=>{if(sn.exists()){const c=sn.data();for(const k of ["barber","salon"])if(c[k]&&c[k].s&&c[k].t)D[k]={...D[k],s:c[k].s.map(x=>[x.n,x.p,x.d]),t:c[k].t.map(x=>[x.n,x.r||""])};R()}},()=>{});
+onSnapshot(doc(db,"config","holidays"),sn=>{HOL=sn.exists()?(sn.data().list||[]):[];R()},()=>{});
 onSnapshot(collection(db,"slots"),sn=>{TK=new Set(sn.docs.map(x=>x.id));R()},e=>{NET="Cannot read the database ("+(e.code||"error")+"). Refresh the page.";R()});
 onAuthStateChanged(auth,u=>{user=u;if(unsub){unsub();unsub=null}B=[];if(isOwner()){unsub=onSnapshot(collection(db,"bookings"),sn=>{B=sn.docs.map(x=>({id:x.id,...x.data()}));R()},e=>{NET="Could not load bookings ("+(e.code||"error")+")";R()})}R()});
 
@@ -74,6 +75,13 @@ let me={};try{me=JSON.parse(localStorage.getItem("sc_me")||"{}")}catch(e){}
 const q=x=>String(x||"").replace(/["<>&]/g,"");
 let s={k:0,c:null,sv:null,st:null,d:null,t:null,code:null},adm=false;
 const hash=x=>{let h=0;for(const c of x)h=(h*31+c.charCodeAt(0))>>>0;return h};
+let HOL=[];const FIX=["01-01","05-01","06-01","10-10","10-20","12-12","12-25","12-26"];
+const HRS={0:[11,0,19,30],1:[6,0,20,0],2:[8,0,20,30],3:[8,0,20,30],4:[8,0,20,30],5:[8,0,20,30],6:[10,0,19,30]};
+const isHol=d=>FIX.includes(d.slice(5))||HOL.includes(d);
+const rng=d=>{const h=HRS[new Date(d+"T12:00").getDay()];let c=h[2]*60+h[3];if(isHol(d))c=Math.min(c,1080);return[h[0]*60+h[1],c]};
+const fm=m=>Math.floor(m/60)+":"+String(m%60).padStart(2,"0");
+const slotsFor=d=>{const[o,c]=rng(d),a=[];for(let m=o;m+30<=c;m+=30)a.push(fm(m));return a};
+const hrs=d=>{const[o,c]=rng(d);return(isHol(d)?"Public holiday hours: ":"Open ")+fm(o)+" to "+fm(c)};
 const sid=(d,st,t)=>d+"_"+st+"_"+t;const taken=(d,st,t)=>TK.has(sid(d,st,t));
 const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const days=()=>Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()+i);return d});
@@ -88,10 +96,10 @@ ED[k].s.forEach((x,i)=>{const at='data-k="'+k+'" data-g="s" data-i="'+i+'"';h+='
 h+='<button class="link" data-a="as" data-k="'+k+'">+ Add service</button><p class="hd">'+D[k].n.toUpperCase()+' STYLISTS</p>';
 ED[k].t.forEach((x,i)=>{const at='data-k="'+k+'" data-g="t" data-i="'+i+'"';h+='<div class="row" style="display:block"><input '+at+' data-f="0" value="'+q(x[0])+'" placeholder="Name"><div style="display:flex;gap:8px"><input '+at+' data-f="1" value="'+q(x[1])+'" placeholder="Title (optional)"><button class="link" data-a="rt" data-k="'+k+'" data-i="'+i+'">Remove</button></div></div>'});
 h+='<button class="link" data-a="at" data-k="'+k+'">+ Add stylist</button>'}
-return h+'</div><div style="margin-top:12px"><button class="btn" data-a="sv">Save changes</button></div><p><button class="link" data-a="edx">Cancel</button></p>'}
+return h+'<p class="hd">EXTRA HOLIDAY DATES (YYYY-MM-DD, comma separated)</p><input data-k="hol" value="'+q(ED.hol)+'" placeholder="2027-03-26, 2027-03-29"></div><div style="margin-top:12px"><button class="btn" data-a="sv">Save changes</button></div><p><button class="link" data-a="edx">Cancel</button></p>'}
 function BLK(){const all0=[...D.barber.t,...D.salon.t].map(x=>x[0]);if(!all0.includes(bs))bs=all0[0];const all=all0;
 let h='<h2>Block off times</h2><div class="days">'+all.map(n=>'<button class="opt '+(bs==n?"sel":"")+'" data-a="bs" data-v="'+n+'">'+n+'</button>').join("")+'</div><div class="days">'+days().map(d=>'<button class="opt '+(bd==iso(d)?"sel":"")+'" data-a="bd" data-v="'+iso(d)+'">'+d.toLocaleDateString("en-GB",{weekday:"short"})+"<small>"+d.getDate()+"</small></button>").join("")+'</div><div class="grid times">';
-h+=T.map(t=>{const id=sid(bd,bs,t),bk=B.some(b=>b.d==bd&&b.st==bs&&b.t==t),on=TK.has(id);return '<button class="opt '+(on&&!bk?"sel":"")+'" data-a="tg" data-v="'+t+'" '+(bk?"disabled":"")+'>'+t+'<small>'+(bk?"booked":on?"blocked":"open")+'</small></button>'}).join("");
+h+="<p>"+hrs(bd)+"</p>"+slotsFor(bd).map(t=>{const id=sid(bd,bs,t),bk=B.some(b=>b.d==bd&&b.st==bs&&b.t==t),on=TK.has(id);return '<button class="opt '+(on&&!bk?"sel":"")+'" data-a="tg" data-v="'+t+'" '+(bk?"disabled":"")+'>'+t+'<small>'+(bk?"booked":on?"blocked":"open")+'</small></button>'}).join("");
 return h+'</div><p>Tap a time to block or unblock it for the stylist and day chosen.</p><div style="margin-top:12px"><button class="btn" data-a="bday">Block whole day</button></div><p><button class="link" data-a="blkx">Back to bookings</button></p>'}
 function R(f){if(adm&&edt&&!f&&$("#ed"))return;const v=$("#v");let h="";const a1=$("#nm"),a2=$("#ph"),vn=a1?a1.value:null,vp=a2?a2.value:null;
 if(adm&&!isOwner()){h='<h2>Owner sign-in</h2><p>'+(user?'This account is not the owner.':'Sign in with the owner Google account to see bookings.')+'</p><button class="btn" data-a="'+(user?'out':'in')+'">'+(user?'Sign out':'Sign in with Google')+'</button><p><button class="link" data-a="exit">Back to booking</button></p>'}
@@ -106,7 +114,7 @@ if(s.k==0)h+='<h2>Choose your arena</h2><div class="grid g2"><button class="opt 
 if(s.k==1)h+="<h2>Pick a service</h2><div class='grid'>"+D[s.c].s.map((x,i)=>'<button class="opt" data-a="svc" data-i="'+i+'"><span class="r">KSh '+x[1]+"</span>"+x[0]+"<small>"+x[2]+"</small></button>").join("")+"</div>"+back();
 if(s.k==2)h+="<h2>Choose your stylist</h2><div class='grid'>"+D[s.c].t.map((x,i)=>'<button class="opt" data-a="stl" data-i="'+i+'"><span class="r">'+x[1]+"</span>"+x[0]+"</button>").join("")+"</div>"+back();
 if(s.k==3){h+="<h2>Pick a time</h2><div class='days'>"+days().map(d=>'<button class="opt '+(s.d==iso(d)?"sel":"")+'" data-a="day" data-v="'+iso(d)+'">'+d.toLocaleDateString("en-GB",{weekday:"short"})+"<small>"+d.getDate()+" "+d.toLocaleDateString("en-GB",{month:"short"})+"</small></button>").join("")+"</div>";
-if(s.d)h+="<div class='grid times'>"+T.map(t=>'<button class="opt '+(s.t==t?"sel":"")+'" data-a="time" data-v="'+t+'" '+(taken(s.d,s.st,t)||past(s.d,t)?"disabled":"")+">"+t+"</button>").join("")+"</div>";else h+="<p>Select a day to see open slots.</p>";
+if(s.d)h+="<p class='sub' style='text-align:left'>"+hrs(s.d)+"</p><div class='grid times'>"+slotsFor(s.d).map(t=>'<button class="opt '+(s.t==t?"sel":"")+'" data-a="time" data-v="'+t+'" '+(taken(s.d,s.st,t)||past(s.d,t)?"disabled":"")+">"+t+"</button>").join("")+"</div>";else h+="<p>Select a day to see open slots.</p>";
 h+='<div style="margin-top:14px"><button class="btn" data-a="next" '+(s.t?"":"disabled")+">Continue</button></div>"+back()}
 if(s.k==4)h+='<h2>Your details</h2><div class="sum"><b>'+s.sv+"</b> (KSh "+s.p+")<br>"+s.st+", "+lab(s.d)+" at "+s.t+'</div><input id="nm" placeholder="Your name" autocomplete="name" value="'+q(me.nm)+'"><input id="ph" placeholder="Phone number" inputmode="tel" autocomplete="tel" value="'+q(me.ph)+'"><div class="err" id="er"></div><button class="btn" data-a="ok">Confirm booking</button>'+back()}
 v.innerHTML=(NET?'<p class="err">'+NET+"</p>":"")+h;if(vn!==null&&$("#nm")){$("#nm").value=vn;$("#ph").value=vp}}
@@ -127,7 +135,7 @@ $("#er").textContent="Booking...";
 Promise.race([bt.commit(),new Promise((_,r)=>setTimeout(()=>r({code:"timeout"}),12000))]).then(()=>{erupt();s.k=5;R()}).catch(e=>{const c=e&&e.code||"error";const er=$("#er");if(er)er.textContent=c=="timeout"?"Cannot reach the server. Check your internet or try Chrome on another network. (timeout)":c=="permission-denied"?"That slot was just taken. Go back and pick another. (permission-denied)":"Booking failed ("+c+")."});return}
 else if(a=="reset"){s={k:0,c:null,sv:null,st:null,d:null,t:null,code:null}}
 else if(a=="del"){const b=B[+i];deleteDoc(doc(db,"bookings",b.id));deleteDoc(doc(db,"slots",sid(b.d,b.st,b.t)));return}
-else if(a=="edt"){edt=true;ED=JSON.parse(JSON.stringify({barber:D.barber,salon:D.salon}))}
+else if(a=="edt"){edt=true;ED=JSON.parse(JSON.stringify({barber:D.barber,salon:D.salon}));ED.hol=HOL.join(", ")}
 else if(a=="edx"){edt=false}
 else if(a=="rs"){ED[b.dataset.k].s.splice(+i,1)}
 else if(a=="as"){ED[b.dataset.k].s.push(["",0,""])}
@@ -135,18 +143,18 @@ else if(a=="rt"){ED[b.dataset.k].t.splice(+i,1)}
 else if(a=="at"){ED[b.dataset.k].t.push(["",""])}
 else if(a=="sv"){const o={};for(const k of ["barber","salon"])o[k]={s:ED[k].s.filter(x=>x[0].trim()).map(x=>({n:x[0].trim().replace(/\//g,""),p:+x[1]||0,d:x[2]||""})),t:ED[k].t.filter(x=>x[0].trim()).map(x=>({n:x[0].trim().replace(/\//g,""),r:x[1]||""}))};
 if(["barber","salon"].some(k=>!o[k].s.length||!o[k].t.length)){NET="Each section needs at least one service and one stylist.";R(1);return}
-NET="";setDoc(doc(db,"config","shop"),o).then(()=>{edt=false;R(1)}).catch(e=>{NET="Could not save ("+(e.code||"error")+"). Update the database rules first.";R(1)});return}
+NET="";Promise.all([setDoc(doc(db,"config","shop"),o),setDoc(doc(db,"config","holidays"),{list:(ED.hol||"").split(/[ ,]+/).filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x))})]).then(()=>{edt=false;R(1)}).catch(e=>{NET="Could not save ("+(e.code||"error")+"). Update the database rules first.";R(1)});return}
 else if(a=="blk"){blk=true;bd=iso(new Date())}
 else if(a=="blkx"){blk=false}
 else if(a=="bs"){bs=v}
 else if(a=="bd"){bd=v}
 else if(a=="tg"){const id=sid(bd,bs,v);if(TK.has(id))deleteDoc(doc(db,"slots",id));else setDoc(doc(db,"slots",id),{d:bd,st:bs,t:v});return}
-else if(a=="bday"){const bt=writeBatch(db);T.forEach(x=>{const id=sid(bd,bs,x);if(!TK.has(id))bt.set(doc(db,"slots",id),{d:bd,st:bs,t:x})});bt.commit();return}
+else if(a=="bday"){const bt=writeBatch(db);slotsFor(bd).forEach(x=>{const id=sid(bd,bs,x);if(!TK.has(id))bt.set(doc(db,"slots",id),{d:bd,st:bs,t:x})});bt.commit();return}
 else if(a=="in"){NET="";signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>{NET="Sign-in failed ("+(e.code||"error")+")";R()});return}
 else if(a=="out"){signOut(auth);return}
 else if(a=="exit"){adm=false;edt=false;blk=false}
 R(1)});
-$("#adm").onclick=()=>{adm=!adm;R(1)};$("#v").addEventListener("input",e=>{const x=e.target.dataset;if(x.k==null||!ED)return;ED[x.k][x.g][x.i][x.f]=x.f=="1"&&x.g=="s"?(+e.target.value||0):e.target.value});const erupt=()=>{const b=$("#bst");b.classList.remove("go");void b.offsetWidth;b.classList.add("go")};setTimeout(erupt,300);
+$("#adm").onclick=()=>{adm=!adm;R(1)};$("#v").addEventListener("input",e=>{const x=e.target.dataset;if(x.k==null||!ED)return;if(x.k=="hol"){ED.hol=e.target.value;return}ED[x.k][x.g][x.i][x.f]=x.f=="1"&&x.g=="s"?(+e.target.value||0):e.target.value});const erupt=()=>{const b=$("#bst");b.classList.remove("go");void b.offsetWidth;b.classList.add("go")};setTimeout(erupt,300);
 R();
 const cv=$("#fx"),cx=cv.getContext("2d");let W,H;const P=[];
 const rs=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight};addEventListener("resize",rs);rs();
