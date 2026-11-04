@@ -51,6 +51,7 @@ input:focus{border-color:var(--blue);box-shadow:0 0 14px rgba(90,209,255,.4)}
 <h1>SHADOWCUT</h1>
 <p class="sub">Barber &amp; Salon. Arise, freshly cut.</p>
 <div class="win"><p class="hd">[ SYSTEM ]</p><div id="v"></div></div>
+<p class="sub" style="margin:14px 0 0"><a class="link" href="tel:+254793709131">Call 0793 709 131</a> &nbsp;&nbsp; <a class="link" target="_blank" rel="noopener" href="https://wa.me/254793709131">WhatsApp us</a></p>
 <div class="foot"><button class="link" id="adm">Owner view</button><span class="sub" style="margin:0">Live booking system</span></div>
 </main>
 <script type="module">
@@ -129,7 +130,7 @@ else if(a=="back"){s.k--}
 else if(a=="ok"){const nm=$("#nm").value.trim(),ph=$("#ph").value.trim();
 if(nm.length<2||ph.replace(/\D/g,"").length<9){$("#er").textContent="Enter your name and a phone number with at least 9 digits.";return}
 if(taken(s.d,s.st,s.t)){$("#er").textContent="That slot was just taken. Go back and pick another.";return}
-s.code="SC-"+Math.random().toString(36).slice(2,6).toUpperCase();const bt=writeBatch(db);bt.set(doc(db,"slots",sid(s.d,s.st,s.t)),{d:s.d,st:s.st,t:s.t});bt.set(doc(collection(db,"bookings")),{d:s.d,t:s.t,st:s.st,sv:s.sv,p:s.p,nm,ph,code:s.code,at:Date.now()});
+s.code="SC-"+Math.random().toString(36).slice(2,6).toUpperCase();const bt=writeBatch(db);bt.set(doc(db,"slots",sid(s.d,s.st,s.t)),{d:s.d,st:s.st,t:s.t});bt.set(doc(db,"bookings",sid(s.d,s.st,s.t)),{d:s.d,t:s.t,st:s.st,sv:s.sv,p:s.p,nm,ph,code:s.code,at:Date.now()});
 me={nm,ph};try{localStorage.setItem("sc_me",JSON.stringify(me))}catch(e){}
 $("#er").textContent="Booking...";
 Promise.race([bt.commit(),new Promise((_,r)=>setTimeout(()=>r({code:"timeout"}),12000))]).then(()=>{erupt();s.k=5;R()}).catch(e=>{const c=e&&e.code||"error";const er=$("#er");if(er)er.textContent=c=="timeout"?"Cannot reach the server. Check your internet or try Chrome on another network. (timeout)":c=="permission-denied"?"That slot was just taken. Go back and pick another. (permission-denied)":"Booking failed ("+c+")."});return}
