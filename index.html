@@ -108,7 +108,7 @@ else if(adm&&edt){h=EDT()}
 else if(adm&&blk){h=BLK()}
 else if(adm){h='<h2>Owner view: all bookings</h2><div class="sum"><b>'+B.length+'</b> bookings, expected income <b>KSh '+B.reduce((a,b)=>a+(b.p||0),0)+'</b></div>';const L=[...B].sort((a,b)=>(a.d+pad(a.t)).localeCompare(b.d+pad(b.t)));
 h+=L.length?L.map((b,i)=>'<div class="row"><div><b>'+lab(b.d)+" "+b.t+"</b> with "+b.st+"<br>"+b.sv+" for "+b.nm+" ("+b.ph+")</div><div><a class='link' target='_blank' rel='noopener' href='"+wa(b)+"'>WhatsApp</a><br><button class='link' data-a='del' data-i='"+B.indexOf(b)+"'>Cancel</button></div></div>").join(""):"<p>No bookings yet. New ones show up here.</p>";
-h+='<div style="margin-top:12px"><button class="btn" data-a="blk">Block off times</button></div><div style="margin-top:12px"><button class="btn" data-a="edt">Edit services and stylists</button></div><div style="margin-top:12px"><button class="btn" data-a="exit">Back to booking</button></div>'}
+h+='<div style="margin-top:12px"><button class="btn" data-a="blk">Block off times</button></div><div style="margin-top:12px"><button class="btn" data-a="edt">Edit services and stylists</button></div><div style="margin-top:12px"><button class="btn" data-a="exit">Back to booking</button></div><div style="margin-top:6px"><button class="link" data-a="out">Sign out</button></div>'}
 else if(s.k==5){h='<h2>Quest accepted</h2><p>You are booked. Show this code at the door.</p><div class="code">'+s.code+'</div><div class="sum"><b>'+s.sv+"</b><br>"+s.st+", "+lab(s.d)+" at "+s.t+'</div><button class="btn" data-a="reset">Book another</button><p style="text-align:center"><a class="link" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent("My appointment at SHADOWCUT: "+s.sv+" with "+s.st+", "+lab(s.d)+" at "+s.t+". Code "+s.code)+'">Share on WhatsApp</a></p>'}
 else{h=bar();
 if(s.k==0)h+='<h2>Choose your arena</h2><div class="grid g2"><button class="opt big" data-a="cat" data-v="barber">Barber shop<span>Cuts, fades, beards</span></button><button class="opt big" data-a="cat" data-v="salon">Salon<span>Hair, nails, skin</span></button></div>';
@@ -152,7 +152,7 @@ else if(a=="bd"){bd=v}
 else if(a=="tg"){const id=sid(bd,bs,v);if(TK.has(id))deleteDoc(doc(db,"slots",id));else setDoc(doc(db,"slots",id),{d:bd,st:bs,t:v});return}
 else if(a=="bday"){const bt=writeBatch(db);slotsFor(bd).forEach(x=>{const id=sid(bd,bs,x);if(!TK.has(id))bt.set(doc(db,"slots",id),{d:bd,st:bs,t:x})});bt.commit();return}
 else if(a=="in"){NET="";signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>{NET="Sign-in failed ("+(e.code||"error")+")";R()});return}
-else if(a=="out"){signOut(auth);return}
+else if(a=="out"){adm=false;edt=false;blk=false;signOut(auth);return}
 else if(a=="exit"){adm=false;edt=false;blk=false}
 R(1)});
 $("#adm").onclick=()=>{adm=!adm;R(1)};$("#v").addEventListener("input",e=>{const x=e.target.dataset;if(x.k==null||!ED)return;if(x.k=="hol"){ED.hol=e.target.value;return}ED[x.k][x.g][x.i][x.f]=x.f=="1"&&x.g=="s"?(+e.target.value||0):e.target.value});const erupt=()=>{const b=$("#bst");b.classList.remove("go");void b.offsetWidth;b.classList.add("go")};setTimeout(erupt,300);
