@@ -43,12 +43,29 @@ input:focus{border-color:var(--blue);box-shadow:0 0 14px rgba(90,209,255,.4)}
 .foot{display:flex;justify-content:space-between;margin-top:14px}
 .err{color:#ff7a9c;min-height:22px}
 .burst{position:fixed;inset:0;z-index:5;pointer-events:none;opacity:0;mix-blend-mode:screen;background:radial-gradient(circle at 50% 88%,#fff 0%,#c58bff 12%,#7a1fd8 36%,transparent 66%)}.burst.go{animation:bst 1.2s ease-out}@keyframes bst{0%{opacity:0;transform:scale(.4)}25%{opacity:.95}100%{opacity:0;transform:scale(1.7)}}
-@media(prefers-reduced-motion:reduce){.aura i,h1,.burst.go{animation:none}}
+.hero{position:relative;text-align:center;padding-top:150px;margin-top:-6px}
+.sil{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:210px;height:270px;pointer-events:none;-webkit-mask-image:linear-gradient(#000 62%,transparent);mask-image:linear-gradient(#000 62%,transparent)}
+.sil .g{transform-origin:100px 150px;animation:gl 2.8s ease-in-out infinite alternate}
+@keyframes gl{from{opacity:.55;transform:scale(.9)}to{opacity:1;transform:scale(1.12)}}
+.hero h1{position:relative;z-index:1;margin-top:0}
+@keyframes stepin{from{opacity:0;transform:translateY(16px);filter:blur(5px) drop-shadow(0 0 20px #b46bff)}to{opacity:1;transform:none;filter:none}}
+#v.in{animation:stepin .45s ease-out}
+.lv{display:flex;gap:14px;align-items:center;margin:0 0 14px;padding:12px;border:1px solid rgba(180,107,255,.5);background:rgba(138,43,226,.14);box-shadow:0 0 24px rgba(180,107,255,.35)}
+.lv>div:last-child{flex:1}.lv b{font:800 16px Orbitron;letter-spacing:.12em;color:#fff;text-shadow:0 0 12px var(--glow)}.lv small{color:var(--mut);font-weight:500}
+.badge{flex:0 0 66px;height:66px;border-radius:50%;display:grid;place-items:center;font:800 30px Orbitron;color:#fff;border:2px solid var(--blue);background:radial-gradient(circle,#7a1fd8,#2a0a58);text-shadow:0 0 14px #fff;box-shadow:0 0 22px rgba(90,209,255,.7);animation:pop .9s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{from{transform:scale(0) rotate(-90deg)}to{transform:none}}
+.xp{height:9px;background:#2a1f52;margin:7px 0;overflow:hidden}.xp i{display:block;height:100%;width:0;background:linear-gradient(90deg,#5ad1ff,#b46bff);box-shadow:0 0 12px var(--glow);animation:xpf 1.6s ease-out .3s forwards}
+@keyframes xpf{to{width:100%}}
+#boot{position:fixed;inset:0;z-index:30;background:#05030d;display:flex;flex-direction:column;justify-content:center;padding:28px;color:var(--blue);text-shadow:0 0 10px rgba(90,209,255,.7);transition:opacity .6s;animation:bootfail 0s 9s forwards}
+#boot pre{margin:0;white-space:pre-wrap;font:500 16px/1.9 Orbitron,monospace}#boot small{color:var(--mut);margin-top:26px;font-family:Rajdhani,sans-serif;text-shadow:none}
+#boot.off{opacity:0;pointer-events:none}@keyframes bootfail{to{opacity:0;pointer-events:none}}
+@media(prefers-reduced-motion:reduce){.aura i,h1,.burst.go,#v.in,.sil .g,.badge{animation:none}.xp i{animation:none;width:100%}}
 </style></head><body>
 <canvas id="fx"></canvas>
+<div id="boot"><pre id="bt"></pre><small>Tap to skip</small></div>
 <div class="aura"><i></i><i></i><i></i></div><div class="burst" id="bst"></div>
 <main>
-<h1>SHADOWCUT</h1>
+<div class="hero"><svg class="sil" viewBox="0 0 200 260" aria-hidden="true"><defs><radialGradient id="ag" cx="50%" cy="55%" r="55%"><stop offset="0" stop-color="#c58bff" stop-opacity=".9"/><stop offset=".5" stop-color="#7a1fd8" stop-opacity=".5"/><stop offset="1" stop-color="#7a1fd8" stop-opacity="0"/></radialGradient></defs><ellipse class="g" cx="100" cy="150" rx="98" ry="120" fill="url(#ag)"/><path d="M100 28C80 28 69 48 72 70C58 86 44 112 40 152L36 260H164L160 152C156 112 142 86 128 70C131 48 120 28 100 28Z" fill="#06030e" stroke="#b46bff" stroke-width="1.6"/><ellipse cx="100" cy="62" rx="15" ry="19" fill="#000"/><ellipse cx="94" cy="60" rx="3.4" ry="1.8" fill="#d9b3ff"/><ellipse cx="106" cy="60" rx="3.4" ry="1.8" fill="#d9b3ff"/></svg><h1>SHADOWCUT</h1></div>
 <p class="sub">Barber &amp; Salon. Arise, freshly cut.</p>
 <div class="win"><p class="hd">[ SYSTEM ]</p><div id="v"></div></div>
 <p class="sub" style="margin:14px 0 0"><a class="link" href="tel:+254793709131">Call 0793 709 131</a> &nbsp;&nbsp; <a class="link" target="_blank" rel="noopener" href="https://wa.me/254793709131">WhatsApp us</a></p>
@@ -76,6 +93,8 @@ let me={};try{me=JSON.parse(localStorage.getItem("sc_me")||"{}")}catch(e){}
 const q=x=>String(x||"").replace(/["<>&]/g,"");
 let s={k:0,c:null,sv:null,st:null,d:null,t:null,code:null},adm=false;
 const hash=x=>{let h=0;for(const c of x)h=(h*31+c.charCodeAt(0))>>>0;return h};
+const RK=["E","D","C","B","A","S"];let LK="";
+const bumpN=()=>{let n=1;try{n=(+localStorage.getItem("sc_n")||0)+1;localStorage.setItem("sc_n",n)}catch(e){}return n};
 let HOL=[];const FIX=["01-01","05-01","06-01","10-10","10-20","12-12","12-25","12-26"];
 const HRS={0:[11,0,19,30],1:[6,0,20,0],2:[8,0,20,30],3:[8,0,20,30],4:[8,0,20,30],5:[8,0,20,30],6:[10,0,19,30]};
 const isHol=d=>FIX.includes(d.slice(5))||HOL.includes(d);
@@ -109,7 +128,7 @@ else if(adm&&blk){h=BLK()}
 else if(adm){h='<h2>Owner view: all bookings</h2><div class="sum"><b>'+B.length+'</b> bookings, expected income <b>KSh '+B.reduce((a,b)=>a+(b.p||0),0)+'</b></div>';const L=[...B].sort((a,b)=>(a.d+pad(a.t)).localeCompare(b.d+pad(b.t)));
 h+=L.length?L.map((b,i)=>'<div class="row"><div><b>'+lab(b.d)+" "+b.t+"</b> with "+b.st+"<br>"+b.sv+" for "+b.nm+" ("+b.ph+")</div><div><a class='link' target='_blank' rel='noopener' href='"+wa(b)+"'>WhatsApp</a><br><button class='link' data-a='del' data-i='"+B.indexOf(b)+"'>Cancel</button></div></div>").join(""):"<p>No bookings yet. New ones show up here.</p>";
 h+='<div style="margin-top:12px"><button class="btn" data-a="blk">Block off times</button></div><div style="margin-top:12px"><button class="btn" data-a="edt">Edit services and stylists</button></div><div style="margin-top:12px"><button class="btn" data-a="exit">Back to booking</button></div><div style="margin-top:6px"><button class="link" data-a="out">Sign out</button></div>'}
-else if(s.k==5){h='<h2>Quest accepted</h2><p>You are booked. Show this code at the door.</p><div class="code">'+s.code+'</div><div class="sum"><b>'+s.sv+"</b><br>"+s.st+", "+lab(s.d)+" at "+s.t+'</div><button class="btn" data-a="reset">Book another</button><p style="text-align:center"><a class="link" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent("My appointment at SHADOWCUT: "+s.sv+" with "+s.st+", "+lab(s.d)+" at "+s.t+". Code "+s.code)+'">Share on WhatsApp</a></p>'}
+else if(s.k==5){h='<h2>Quest accepted</h2><div class="lv"><div class="badge">'+RK[Math.min(s.n||1,6)-1]+'</div><div><b>LEVEL UP</b><div class="xp"><i></i></div><small>+100 XP. '+RK[Math.min(s.n||1,6)-1]+'-rank hunter (saved on this phone)</small></div></div><p>You are booked. Show this code at the door.</p><div class="code">'+s.code+'</div><div class="sum"><b>'+s.sv+"</b><br>"+s.st+", "+lab(s.d)+" at "+s.t+'</div><button class="btn" data-a="reset">Book another</button><p style="text-align:center"><a class="link" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent("My appointment at SHADOWCUT: "+s.sv+" with "+s.st+", "+lab(s.d)+" at "+s.t+". Code "+s.code)+'">Share on WhatsApp</a></p>'}
 else{h=bar();
 if(s.k==0)h+='<h2>Choose your arena</h2><div class="grid g2"><button class="opt big" data-a="cat" data-v="barber">Barber shop<span>Cuts, fades, beards</span></button><button class="opt big" data-a="cat" data-v="salon">Salon<span>Hair, nails, skin</span></button></div>';
 if(s.k==1)h+="<h2>Pick a service</h2><div class='grid'>"+D[s.c].s.map((x,i)=>'<button class="opt" data-a="svc" data-i="'+i+'"><span class="r">KSh '+x[1]+"</span>"+x[0]+"<small>"+x[2]+"</small></button>").join("")+"</div>"+back();
@@ -118,7 +137,7 @@ if(s.k==3){h+="<h2>Pick a time</h2><div class='days'>"+days().map(d=>'<button cl
 if(s.d)h+="<p class='sub' style='text-align:left'>"+hrs(s.d)+"</p><div class='grid times'>"+slotsFor(s.d).map(t=>'<button class="opt '+(s.t==t?"sel":"")+'" data-a="time" data-v="'+t+'" '+(taken(s.d,s.st,t)||past(s.d,t)?"disabled":"")+">"+t+"</button>").join("")+"</div>";else h+="<p>Select a day to see open slots.</p>";
 h+='<div style="margin-top:14px"><button class="btn" data-a="next" '+(s.t?"":"disabled")+">Continue</button></div>"+back()}
 if(s.k==4)h+='<h2>Your details</h2><div class="sum"><b>'+s.sv+"</b> (KSh "+s.p+")<br>"+s.st+", "+lab(s.d)+" at "+s.t+'</div><input id="nm" placeholder="Your name" autocomplete="name" value="'+q(me.nm)+'"><input id="ph" placeholder="Phone number" inputmode="tel" autocomplete="tel" value="'+q(me.ph)+'"><div class="err" id="er"></div><button class="btn" data-a="ok">Confirm booking</button>'+back()}
-v.innerHTML=(NET?'<p class="err">'+NET+"</p>":"")+h;if(vn!==null&&$("#nm")){$("#nm").value=vn;$("#ph").value=vp}}
+v.innerHTML=(NET?'<p class="err">'+NET+"</p>":"")+h;if(vn!==null&&$("#nm")){$("#nm").value=vn;$("#ph").value=vp}const kk=adm?(blk?"b":edt?"e":"a"):s.k;if(kk!==LK){LK=kk;v.classList.remove("in");void v.offsetWidth;v.classList.add("in")}}
 $("#v").addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b||b.disabled)return;const a=b.dataset.a,v=b.dataset.v,i=b.dataset.i;
 if(a=="cat"){s.c=v;s.k=1}
 else if(a=="svc"){s.sv=D[s.c].s[i][0];s.p=D[s.c].s[i][1];s.k=2}
@@ -133,7 +152,7 @@ if(taken(s.d,s.st,s.t)){$("#er").textContent="That slot was just taken. Go back 
 s.code="SC-"+Math.random().toString(36).slice(2,6).toUpperCase();const bt=writeBatch(db);bt.set(doc(db,"slots",sid(s.d,s.st,s.t)),{d:s.d,st:s.st,t:s.t});bt.set(doc(db,"bookings",sid(s.d,s.st,s.t)),{d:s.d,t:s.t,st:s.st,sv:s.sv,p:s.p,nm,ph,code:s.code,at:Date.now()});
 me={nm,ph};try{localStorage.setItem("sc_me",JSON.stringify(me))}catch(e){}
 $("#er").textContent="Booking...";
-Promise.race([bt.commit(),new Promise((_,r)=>setTimeout(()=>r({code:"timeout"}),12000))]).then(()=>{erupt();s.k=5;R()}).catch(e=>{const c=e&&e.code||"error";const er=$("#er");if(er)er.textContent=c=="timeout"?"Cannot reach the server. Check your internet or try Chrome on another network. (timeout)":c=="permission-denied"?"That slot was just taken. Go back and pick another. (permission-denied)":"Booking failed ("+c+")."});return}
+Promise.race([bt.commit(),new Promise((_,r)=>setTimeout(()=>r({code:"timeout"}),12000))]).then(()=>{s.n=bumpN();erupt();s.k=5;R()}).catch(e=>{const c=e&&e.code||"error";const er=$("#er");if(er)er.textContent=c=="timeout"?"Cannot reach the server. Check your internet or try Chrome on another network. (timeout)":c=="permission-denied"?"That slot was just taken. Go back and pick another. (permission-denied)":"Booking failed ("+c+")."});return}
 else if(a=="reset"){s={k:0,c:null,sv:null,st:null,d:null,t:null,code:null}}
 else if(a=="del"){const b=B[+i];deleteDoc(doc(db,"bookings",b.id));deleteDoc(doc(db,"slots",sid(b.d,b.st,b.t)));return}
 else if(a=="edt"){edt=true;ED=JSON.parse(JSON.stringify({barber:D.barber,salon:D.salon}));ED.hol=HOL.join(", ")}
@@ -155,7 +174,12 @@ else if(a=="in"){NET="";signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>
 else if(a=="out"){adm=false;edt=false;blk=false;signOut(auth);return}
 else if(a=="exit"){adm=false;edt=false;blk=false}
 R(1)});
-$("#adm").onclick=()=>{adm=!adm;R(1)};$("#v").addEventListener("input",e=>{const x=e.target.dataset;if(x.k==null||!ED)return;if(x.k=="hol"){ED.hol=e.target.value;return}ED[x.k][x.g][x.i][x.f]=x.f=="1"&&x.g=="s"?(+e.target.value||0):e.target.value});const erupt=()=>{const b=$("#bst");b.classList.remove("go");void b.offsetWidth;b.classList.add("go")};setTimeout(erupt,300);
+$("#adm").onclick=()=>{adm=!adm;R(1)};$("#v").addEventListener("input",e=>{const x=e.target.dataset;if(x.k==null||!ED)return;if(x.k=="hol"){ED.hol=e.target.value;return}ED[x.k][x.g][x.i][x.f]=x.f=="1"&&x.g=="s"?(+e.target.value||0):e.target.value});const erupt=()=>{const b=$("#bst");b.classList.remove("go");void b.offsetWidth;b.classList.add("go")};const bootEl=$("#boot");let done=false;
+const finish=()=>{if(done)return;done=true;bootEl.classList.add("off");setTimeout(()=>bootEl.remove(),700);setTimeout(erupt,150)};
+let seen=false;const today=new Date().toDateString();try{seen=localStorage.getItem("sc_boot")==today;localStorage.setItem("sc_boot",today)}catch(e){}
+if(seen||matchMedia("(prefers-reduced-motion:reduce)").matches)finish();
+else{const L=["[SYSTEM] Connecting...","[SYSTEM] Player detected.","[SYSTEM] New quest available:","         Book an appointment."];let li=0,ci=0;const pre=$("#bt");
+const tick=()=>{if(done)return;if(li>=L.length){setTimeout(finish,500);return}ci++;pre.textContent=L.slice(0,li).join("\n")+(li?"\n":"")+L[li].slice(0,ci);if(ci>=L[li].length){li++;ci=0;setTimeout(tick,260)}else setTimeout(tick,16)};tick();bootEl.addEventListener("click",finish)}
 R();
 const cv=$("#fx"),cx=cv.getContext("2d");let W,H;const P=[];
 const rs=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight};addEventListener("resize",rs);rs();
