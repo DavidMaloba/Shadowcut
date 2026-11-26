@@ -85,7 +85,7 @@ barber:{n:"Barber shop",s:[["Classic haircut",150,"30 min"],["Fade and beard",25
 salon:{n:"Salon",s:[["Wash and blow-dry",1200,"60 min"],["Knotless braids",3000,"3 hrs"],["Hair color",3500,"2 hrs"],["Manicure",1500,"45 min"],["Facial",3000,"50 min"]],t:[["Mira","S-rank"],["Zara","A-rank"],["Lena","B-rank"]]}};
 const T=[];for(let h=9;h<18;h++){T.push(h+":00".padStart(0));T.push(h+":30")}
 const pad=t=>t.length<5?"0"+t:t;
-let B=[],TK=new Set(),user=null,unsub=null,NET="",blk=false,bs="Kai",bd=null,edt=false,ED=null;const OWN="dmaloba903@gmail.com";const isOwner=()=>!!user&&user.email==OWN;
+let B=[],TK=new Set(),user=null,unsub=null,NET="",blk=false,bs="Kai",bd=null,edt=false,ED=null,rep=false,rp="week";const OWN="dmaloba903@gmail.com";const isOwner=()=>!!user&&user.email==OWN;
 onSnapshot(doc(db,"config","shop"),sn=>{if(sn.exists()){const c=sn.data();for(const k of ["barber","salon"])if(c[k]&&c[k].s&&c[k].t)D[k]={...D[k],s:c[k].s.map(x=>[x.n,x.p,x.d]),t:c[k].t.map(x=>[x.n,x.r||""])};R()}},()=>{});
 onSnapshot(doc(db,"config","holidays"),sn=>{HOL=sn.exists()?(sn.data().list||[]):[];R()},()=>{});
 onSnapshot(collection(db,"slots"),sn=>{TK=new Set(sn.docs.map(x=>x.id));R()},e=>{NET="Cannot read the database ("+(e.code||"error")+"). Refresh the page.";R()});
@@ -112,6 +112,17 @@ const wa=b=>{let n=String(b.ph).replace(/\D/g,"");if(n.startsWith("0"))n="254"+n
 const past=(d,t)=>d==iso(new Date())&&new Date(d+"T"+pad(t))<new Date();
 const bar=()=>'<div class="bar">'+[0,1,2,3,4].map(i=>'<b class="'+(i<=s.k?"on":"")+'"></b>').join("")+"</div>";
 const back=()=>s.k>0?'<button class="link" data-a="back">Back</button>':"";
+function REP(){
+const now=new Date(),td=iso(now);
+const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7));
+const ws=iso(mon),we=iso(new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()+6)),ms=td.slice(0,7);
+const L=B.filter(b=>rp=="day"?b.d==td:rp=="week"?(b.d>=ws&&b.d<=we):rp=="month"?b.d.startsWith(ms):true);
+const sum=a=>a.reduce((x,b)=>x+(b.p||0),0);
+const grp=f=>{const m={};L.forEach(b=>{const k=f(b);m[k]=m[k]||{n:0,r:0};m[k].n++;m[k].r+=b.p||0});return Object.entries(m).sort((a,b)=>b[1].n-a[1].n)};
+const bars=(rows,money)=>{const mx=Math.max(1,...rows.map(r=>r[1].n));return rows.length?rows.map(r=>'<div style="margin:8px 0"><div class="row" style="border:0;padding:0"><span>'+q(r[0])+'</span><span>'+r[1].n+' booking'+(r[1].n>1?'s':'')+(money?', KSh '+r[1].r:'')+'</span></div><div class="xp"><i style="width:'+Math.round(r[1].n/mx*100)+'%;animation:none"></i></div></div>').join(""):'<p>No data for this period.</p>'};
+const DN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const per=[["day","Today"],["week","This week"],["month","This month"],["all","All time"]];
+return '<h2>Reports</h2><div class="days">'+per.map(x=>'<button class="opt '+(rp==x[0]?"sel":"")+'" data-a="rp" data-v="'+x[0]+'">'+x[1]+'</button>').join("")+'</div><div class="sum"><b>'+L.length+'</b> bookings, expected income <b>KSh '+sum(L)+'</b>'+(L.length?', average KSh '+Math.round(sum(L)/L.length):'')+'</div><p class="hd">TOP SERVICES</p>'+bars(grp(b=>b.sv),1)+'<p class="hd">BY STYLIST</p>'+bars(grp(b=>b.st),1)+'<p class="hd">BUSIEST DAYS</p>'+bars(grp(b=>DN[new Date(b.d+"T12:00").getDay()]),0)+'<p>Based on appointment dates. Cancelled bookings are not counted, and income is expected, not payments received.</p><p><button class="link" data-a="repx">Back to bookings</button></p>'}
 function EDT(){let h='<h2>Edit services and stylists</h2><div id="ed">';
 for(const k of ["barber","salon"]){h+='<p class="hd">'+D[k].n.toUpperCase()+' SERVICES</p>';
 ED[k].s.forEach((x,i)=>{const at='data-k="'+k+'" data-g="s" data-i="'+i+'"';h+='<div class="row" style="display:block"><input '+at+' data-f="0" value="'+q(x[0])+'" placeholder="Service name"><div style="display:flex;gap:8px"><input '+at+' data-f="1" value="'+(+x[1]||0)+'" inputmode="numeric" placeholder="Price KSh"><input '+at+' data-f="2" value="'+q(x[2])+'" placeholder="Time"><button class="link" data-a="rs" data-k="'+k+'" data-i="'+i+'">Remove</button></div></div>'});
@@ -125,11 +136,12 @@ h+="<p>"+hrs(bd)+"</p>"+slotsFor(bd).map(t=>{const id=sid(bd,bs,t),bk=B.some(b=>
 return h+'</div><p>Tap a time to block or unblock it for the stylist and day chosen.</p><div style="margin-top:12px"><button class="btn" data-a="bday">Block whole day</button></div><p><button class="link" data-a="blkx">Back to bookings</button></p>'}
 function R(f){if(adm&&edt&&!f&&$("#ed"))return;const v=$("#v");let h="";const a1=$("#nm"),a2=$("#ph"),vn=a1?a1.value:null,vp=a2?a2.value:null;
 if(adm&&!isOwner()){h='<h2>Owner sign-in</h2><p>'+(user?'This account is not the owner.':'Sign in with the owner Google account to see bookings.')+'</p><button class="btn" data-a="'+(user?'out':'in')+'">'+(user?'Sign out':'Sign in with Google')+'</button><p><button class="link" data-a="exit">Back to booking</button></p>'}
+else if(adm&&rep){h=REP()}
 else if(adm&&edt){h=EDT()}
 else if(adm&&blk){h=BLK()}
 else if(adm){h='<h2>Owner view: all bookings</h2><div class="sum"><b>'+B.length+'</b> bookings, expected income <b>KSh '+B.reduce((a,b)=>a+(b.p||0),0)+'</b></div>';const L=[...B].sort((a,b)=>(a.d+pad(a.t)).localeCompare(b.d+pad(b.t)));
 h+=L.length?L.map((b,i)=>'<div class="row"><div><b>'+lab(b.d)+" "+b.t+"</b> with "+b.st+"<br>"+b.sv+" for "+b.nm+" ("+b.ph+")</div><div><a class='link' target='_blank' rel='noopener' href='"+wa(b)+"'>WhatsApp</a><br><button class='link' data-a='del' data-i='"+B.indexOf(b)+"'>Cancel</button></div></div>").join(""):"<p>No bookings yet. New ones show up here.</p>";
-h+='<div style="margin-top:12px"><button class="btn" data-a="blk">Block off times</button></div><div style="margin-top:12px"><button class="btn" data-a="edt">Edit services and stylists</button></div><div style="margin-top:12px"><button class="btn" data-a="exit">Back to booking</button></div><div style="margin-top:6px"><button class="link" data-a="out">Sign out</button></div>'}
+h+='<div style="margin-top:12px"><button class="btn" data-a="rep">Reports</button></div><div style="margin-top:12px"><button class="btn" data-a="blk">Block off times</button></div><div style="margin-top:12px"><button class="btn" data-a="edt">Edit services and stylists</button></div><div style="margin-top:12px"><button class="btn" data-a="exit">Back to booking</button></div><div style="margin-top:6px"><button class="link" data-a="out">Sign out</button></div>'}
 else if(s.k==5){h='<h2>Quest accepted</h2><div class="lv"><div class="badge">'+RK[Math.min(s.n||1,6)-1]+'</div><div><b>LEVEL UP</b><div class="xp"><i></i></div><small>+100 XP. '+RK[Math.min(s.n||1,6)-1]+'-rank hunter (saved on this phone)</small></div></div><p>You are booked. Show this code at the door.</p><div class="code">'+s.code+'</div><div class="sum"><b>'+s.sv+"</b><br>"+s.st+", "+lab(s.d)+" at "+s.t+'</div><button class="btn" data-a="reset">Book another</button><p style="text-align:center"><a class="link" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent("My appointment at SHADOWCUT: "+s.sv+" with "+s.st+", "+lab(s.d)+" at "+s.t+". Code "+s.code)+'">Share on WhatsApp</a></p>'}
 else{h=bar();
 if(s.k==0)h+='<h2>Choose your arena</h2><div class="grid g2"><button class="opt big" data-a="cat" data-v="barber">Barber shop<span>Cuts, fades, beards</span></button><button class="opt big" data-a="cat" data-v="salon">Salon<span>Hair, nails, skin</span></button></div>';
@@ -139,7 +151,7 @@ if(s.k==3){h+="<h2>Pick a time</h2><div class='days'>"+days().map(d=>'<button cl
 if(s.d)h+="<p class='sub' style='text-align:left'>"+hrs(s.d)+"</p><div class='grid times'>"+slotsFor(s.d).map(t=>'<button class="opt '+(s.t==t?"sel":"")+'" data-a="time" data-v="'+t+'" '+(taken(s.d,s.st,t)||past(s.d,t)?"disabled":"")+">"+t+"</button>").join("")+"</div>";else h+="<p>Select a day to see open slots.</p>";
 h+='<div style="margin-top:14px"><button class="btn" data-a="next" '+(s.t?"":"disabled")+">Continue</button></div>"+back()}
 if(s.k==4)h+='<h2>Your details</h2><div class="sum"><b>'+s.sv+"</b> (KSh "+s.p+")<br>"+s.st+", "+lab(s.d)+" at "+s.t+'</div><input id="nm" placeholder="Your name" autocomplete="name" value="'+q(me.nm)+'"><input id="ph" placeholder="Phone number" inputmode="tel" autocomplete="tel" value="'+q(me.ph)+'"><div class="err" id="er"></div><button class="btn" data-a="ok">Confirm booking</button>'+back()}
-v.innerHTML=(NET?'<p class="err">'+NET+"</p>":"")+h;if(vn!==null&&$("#nm")){$("#nm").value=vn;$("#ph").value=vp}const kk=adm?(blk?"b":edt?"e":"a"):s.k;if(kk!==LK){LK=kk;v.classList.remove("in");void v.offsetWidth;v.classList.add("in")}}
+v.innerHTML=(NET?'<p class="err">'+NET+"</p>":"")+h;if(vn!==null&&$("#nm")){$("#nm").value=vn;$("#ph").value=vp}const kk=adm?(rep?"r":blk?"b":edt?"e":"a"):s.k;if(kk!==LK){LK=kk;v.classList.remove("in");void v.offsetWidth;v.classList.add("in")}}
 $("#v").addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b||b.disabled)return;const a=b.dataset.a,v=b.dataset.v,i=b.dataset.i;
 if(a=="cat"){s.c=v;s.k=1}
 else if(a=="svc"){s.sv=D[s.c].s[i][0];s.p=D[s.c].s[i][1];s.k=2}
@@ -157,6 +169,9 @@ $("#er").textContent="Booking...";
 Promise.race([bt.commit(),new Promise((_,r)=>setTimeout(()=>r({code:"timeout"}),12000))]).then(()=>{s.n=bumpN();erupt();s.k=5;R()}).catch(e=>{const c=e&&e.code||"error";const er=$("#er");if(er)er.textContent=c=="timeout"?"Cannot reach the server. Check your internet or try Chrome on another network. (timeout)":c=="permission-denied"?"That slot was just taken. Go back and pick another. (permission-denied)":"Booking failed ("+c+")."});return}
 else if(a=="reset"){s={k:0,c:null,sv:null,st:null,d:null,t:null,code:null}}
 else if(a=="del"){const b=B[+i];deleteDoc(doc(db,"bookings",b.id));deleteDoc(doc(db,"slots",sid(b.d,b.st,b.t)));return}
+else if(a=="rep"){rep=true}
+else if(a=="repx"){rep=false}
+else if(a=="rp"){rp=v}
 else if(a=="edt"){edt=true;ED=JSON.parse(JSON.stringify({barber:D.barber,salon:D.salon}));ED.hol=HOL.join(", ")}
 else if(a=="edx"){edt=false}
 else if(a=="rs"){ED[b.dataset.k].s.splice(+i,1)}
@@ -173,8 +188,8 @@ else if(a=="bd"){bd=v}
 else if(a=="tg"){const id=sid(bd,bs,v);if(TK.has(id))deleteDoc(doc(db,"slots",id));else setDoc(doc(db,"slots",id),{d:bd,st:bs,t:v});return}
 else if(a=="bday"){const bt=writeBatch(db);slotsFor(bd).forEach(x=>{const id=sid(bd,bs,x);if(!TK.has(id))bt.set(doc(db,"slots",id),{d:bd,st:bs,t:x})});bt.commit();return}
 else if(a=="in"){NET="";signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>{NET="Sign-in failed ("+(e.code||"error")+")";R()});return}
-else if(a=="out"){adm=false;edt=false;blk=false;signOut(auth);return}
-else if(a=="exit"){adm=false;edt=false;blk=false}
+else if(a=="out"){adm=false;edt=false;blk=false;rep=false;signOut(auth);return}
+else if(a=="exit"){adm=false;edt=false;blk=false;rep=false}
 R(1)});
 $("#adm").onclick=()=>{adm=!adm;R(1)};$("#v").addEventListener("input",e=>{const x=e.target.dataset;if(x.k==null||!ED)return;if(x.k=="hol"){ED.hol=e.target.value;return}ED[x.k][x.g][x.i][x.f]=x.f=="1"&&x.g=="s"?(+e.target.value||0):e.target.value});const erupt=()=>{const b=$("#bst");b.classList.remove("go");void b.offsetWidth;b.classList.add("go")};const bootEl=$("#boot");let done=false;
 const finish=()=>{if(done)return;done=true;bootEl.classList.add("off");setTimeout(()=>bootEl.remove(),700);setTimeout(erupt,150)};
