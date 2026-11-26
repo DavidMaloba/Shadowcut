@@ -45,6 +45,7 @@ input:focus{border-color:var(--blue);box-shadow:0 0 14px rgba(90,209,255,.4)}
 .foot{display:flex;justify-content:space-between;margin-top:14px}
 .err{color:#ff7a9c;min-height:22px}
 .burst{position:fixed;inset:0;z-index:5;pointer-events:none;opacity:0;mix-blend-mode:screen;background:radial-gradient(circle at 50% 88%,#fff 0%,#c58bff 12%,#7a1fd8 36%,transparent 66%)}.burst.go{animation:bst 1.2s ease-out}@keyframes bst{0%{opacity:0;transform:scale(.4)}25%{opacity:.95}100%{opacity:0;transform:scale(1.7)}}
+.loy{color:#ffd166;font-weight:800}
 .hero{position:relative;text-align:center;padding-top:150px;margin-top:-6px}
 .sil{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:210px;height:270px;pointer-events:none;-webkit-mask-image:linear-gradient(#000 62%,transparent);mask-image:linear-gradient(#000 62%,transparent)}
 .sil .g{transform-origin:100px 150px;animation:gl 2.8s ease-in-out infinite alternate}
@@ -95,6 +96,11 @@ let me={};try{me=JSON.parse(localStorage.getItem("sc_me")||"{}")}catch(e){}
 const q=x=>String(x||"").replace(/["<>&]/g,"");
 let s={k:0,c:null,sv:null,st:null,d:null,t:null,code:null},adm=false;
 const hash=x=>{let h=0;for(const c of x)h=(h*31+c.charCodeAt(0))>>>0;return h};
+const RW=5,pk=ph=>String(ph).replace(/\D/g,"").slice(-9);
+const vnum=b=>B.filter(x=>pk(x.ph)==pk(b.ph)&&(x.d+pad(x.t))<=(b.d+pad(b.t))).length;
+const eff=b=>vnum(b)%RW==0?Math.round((b.p||0)/2):(b.p||0);
+const loy=b=>{const n=vnum(b);return n%RW==0?'<br><span class="loy">Visit '+n+': HALF PRICE, charge KSh '+eff(b)+'</span>':'<br><small>Visit '+n+', '+(RW-n%RW)+' more to half price</small>'};
+const lyt=b=>{const n=vnum(b);return n%RW==0?" This is your visit #"+n+", so it is HALF PRICE today!":" Loyalty: visit "+n+" so far. Visit "+(n+RW-n%RW)+" is half price!"};
 const RK=["E","D","C","B","A","S"];let LK="";
 const bumpN=()=>{let n=1;try{n=(+localStorage.getItem("sc_n")||0)+1;localStorage.setItem("sc_n",n)}catch(e){}return n};
 let HOL=[];const FIX=["01-01","05-01","06-01","10-10","10-20","12-12","12-25","12-26"];
@@ -108,7 +114,7 @@ const sid=(d,st,t)=>d+"_"+st+"_"+t;const taken=(d,st,t)=>TK.has(sid(d,st,t));
 const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const days=()=>Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()+i);return d});
 const lab=d=>new Date(d+"T12:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
-const wa=b=>{let n=String(b.ph).replace(/\D/g,"");if(n.startsWith("0"))n="254"+n.slice(1);else if(n.length==9)n="254"+n;return "https://wa.me/"+n+"?text="+encodeURIComponent("Hi "+b.nm+", reminder from SHADOWCUT: "+b.sv+" with "+b.st+" on "+lab(b.d)+" at "+b.t+". See you then! Code "+b.code)};
+const wa=b=>{let n=String(b.ph).replace(/\D/g,"");if(n.startsWith("0"))n="254"+n.slice(1);else if(n.length==9)n="254"+n;return "https://wa.me/"+n+"?text="+encodeURIComponent("Hi "+b.nm+", reminder from SHADOWCUT: "+b.sv+" with "+b.st+" on "+lab(b.d)+" at "+b.t+". See you then! Code "+b.code+lyt(b))};
 const past=(d,t)=>d==iso(new Date())&&new Date(d+"T"+pad(t))<new Date();
 const bar=()=>'<div class="bar">'+[0,1,2,3,4].map(i=>'<b class="'+(i<=s.k?"on":"")+'"></b>').join("")+"</div>";
 const back=()=>s.k>0?'<button class="link" data-a="back">Back</button>':"";
@@ -117,12 +123,15 @@ const now=new Date(),td=iso(now);
 const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7));
 const ws=iso(mon),we=iso(new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()+6)),ms=td.slice(0,7);
 const L=B.filter(b=>rp=="day"?b.d==td:rp=="week"?(b.d>=ws&&b.d<=we):rp=="month"?b.d.startsWith(ms):true);
-const sum=a=>a.reduce((x,b)=>x+(b.p||0),0);
-const grp=f=>{const m={};L.forEach(b=>{const k=f(b);m[k]=m[k]||{n:0,r:0};m[k].n++;m[k].r+=b.p||0});return Object.entries(m).sort((a,b)=>b[1].n-a[1].n)};
+const sum=a=>a.reduce((x,b)=>x+eff(b),0);
+const grp=f=>{const m={};L.forEach(b=>{const k=f(b);m[k]=m[k]||{n:0,r:0};m[k].n++;m[k].r+=eff(b)});return Object.entries(m).sort((a,b)=>b[1].n-a[1].n)};
 const bars=(rows,money)=>{const mx=Math.max(1,...rows.map(r=>r[1].n));return rows.length?rows.map(r=>'<div style="margin:8px 0"><div class="row" style="border:0;padding:0"><span>'+q(r[0])+'</span><span>'+r[1].n+' booking'+(r[1].n>1?'s':'')+(money?', KSh '+r[1].r:'')+'</span></div><div class="xp"><i style="width:'+Math.round(r[1].n/mx*100)+'%;animation:none"></i></div></div>').join(""):'<p>No data for this period.</p>'};
 const DN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const cu={};B.forEach(b=>{const k=pk(b.ph);cu[k]=cu[k]||{nm:b.nm,ph:b.ph,n:0};cu[k].n++});
+const cl=Object.values(cu).sort((a,b)=>b.n-a.n).slice(0,8);
+const LH='<p class="hd">LOYAL CUSTOMERS (every 5th visit half price)</p>'+(cl.length?cl.map(c=>'<div class="row"><div><b>'+q(c.nm)+'</b><br><small>'+q(c.ph)+'</small></div><div style="text-align:right">'+c.n+' visit'+(c.n>1?'s':'')+'<br><small>'+(c.n%RW==0?'Visit '+c.n+' was half price':(RW-c.n%RW)+' more for half price')+'</small></div></div>').join(""):'<p>No customers yet.</p>');
 const per=[["day","Today"],["week","This week"],["month","This month"],["all","All time"]];
-return '<h2>Reports</h2><div class="days">'+per.map(x=>'<button class="opt '+(rp==x[0]?"sel":"")+'" data-a="rp" data-v="'+x[0]+'">'+x[1]+'</button>').join("")+'</div><div class="sum"><b>'+L.length+'</b> bookings, expected income <b>KSh '+sum(L)+'</b>'+(L.length?', average KSh '+Math.round(sum(L)/L.length):'')+'</div><p class="hd">TOP SERVICES</p>'+bars(grp(b=>b.sv),1)+'<p class="hd">BY STYLIST</p>'+bars(grp(b=>b.st),1)+'<p class="hd">BUSIEST DAYS</p>'+bars(grp(b=>DN[new Date(b.d+"T12:00").getDay()]),0)+'<p>Based on appointment dates. Cancelled bookings are not counted, and income is expected, not payments received.</p><p><button class="link" data-a="repx">Back to bookings</button></p>'}
+return '<h2>Reports</h2><div class="days">'+per.map(x=>'<button class="opt '+(rp==x[0]?"sel":"")+'" data-a="rp" data-v="'+x[0]+'">'+x[1]+'</button>').join("")+'</div><div class="sum"><b>'+L.length+'</b> bookings, expected income <b>KSh '+sum(L)+'</b>'+(L.length?', average KSh '+Math.round(sum(L)/L.length):'')+'</div><p class="hd">TOP SERVICES</p>'+bars(grp(b=>b.sv),1)+'<p class="hd">BY STYLIST</p>'+bars(grp(b=>b.st),1)+'<p class="hd">BUSIEST DAYS</p>'+bars(grp(b=>DN[new Date(b.d+"T12:00").getDay()]),0)+LH+'<p>Based on appointment dates. Cancelled bookings are not counted, and income is expected (half price visits included), not payments received.</p><p><button class="link" data-a="repx">Back to bookings</button></p>'}
 function EDT(){let h='<h2>Edit services and stylists</h2><div id="ed">';
 for(const k of ["barber","salon"]){h+='<p class="hd">'+D[k].n.toUpperCase()+' SERVICES</p>';
 ED[k].s.forEach((x,i)=>{const at='data-k="'+k+'" data-g="s" data-i="'+i+'"';h+='<div class="row" style="display:block"><input '+at+' data-f="0" value="'+q(x[0])+'" placeholder="Service name"><div style="display:flex;gap:8px"><input '+at+' data-f="1" value="'+(+x[1]||0)+'" inputmode="numeric" placeholder="Price KSh"><input '+at+' data-f="2" value="'+q(x[2])+'" placeholder="Time"><button class="link" data-a="rs" data-k="'+k+'" data-i="'+i+'">Remove</button></div></div>'});
@@ -139,10 +148,10 @@ if(adm&&!isOwner()){h='<h2>Owner sign-in</h2><p>'+(user?'This account is not the
 else if(adm&&rep){h=REP()}
 else if(adm&&edt){h=EDT()}
 else if(adm&&blk){h=BLK()}
-else if(adm){h='<h2>Owner view: all bookings</h2><div class="sum"><b>'+B.length+'</b> bookings, expected income <b>KSh '+B.reduce((a,b)=>a+(b.p||0),0)+'</b></div>';const L=[...B].sort((a,b)=>(a.d+pad(a.t)).localeCompare(b.d+pad(b.t)));
-h+=L.length?L.map((b,i)=>'<div class="row"><div><b>'+lab(b.d)+" "+b.t+"</b> with "+b.st+"<br>"+b.sv+" for "+b.nm+" ("+b.ph+")</div><div><a class='link' target='_blank' rel='noopener' href='"+wa(b)+"'>WhatsApp</a><br><button class='link' data-a='del' data-i='"+B.indexOf(b)+"'>Cancel</button></div></div>").join(""):"<p>No bookings yet. New ones show up here.</p>";
+else if(adm){h='<h2>Owner view: all bookings</h2><div class="sum"><b>'+B.length+'</b> bookings, expected income <b>KSh '+B.reduce((a,b)=>a+eff(b),0)+'</b></div>';const L=[...B].sort((a,b)=>(a.d+pad(a.t)).localeCompare(b.d+pad(b.t)));
+h+=L.length?L.map((b,i)=>'<div class="row"><div><b>'+lab(b.d)+" "+b.t+"</b> with "+b.st+"<br>"+b.sv+" for "+b.nm+" ("+b.ph+")"+loy(b)+"</div><div><a class='link' target='_blank' rel='noopener' href='"+wa(b)+"'>WhatsApp</a><br><button class='link' data-a='del' data-i='"+B.indexOf(b)+"'>Cancel</button></div></div>").join(""):"<p>No bookings yet. New ones show up here.</p>";
 h+='<div style="margin-top:12px"><button class="btn" data-a="rep">Reports</button></div><div style="margin-top:12px"><button class="btn" data-a="blk">Block off times</button></div><div style="margin-top:12px"><button class="btn" data-a="edt">Edit services and stylists</button></div><div style="margin-top:12px"><button class="btn" data-a="exit">Back to booking</button></div><div style="margin-top:6px"><button class="link" data-a="out">Sign out</button></div>'}
-else if(s.k==5){h='<h2>Quest accepted</h2><div class="lv"><div class="badge">'+RK[Math.min(s.n||1,6)-1]+'</div><div><b>LEVEL UP</b><div class="xp"><i></i></div><small>+100 XP. '+RK[Math.min(s.n||1,6)-1]+'-rank hunter (saved on this phone)</small></div></div><p>You are booked. Show this code at the door.</p><div class="code">'+s.code+'</div><div class="sum"><b>'+s.sv+"</b><br>"+s.st+", "+lab(s.d)+" at "+s.t+'</div><button class="btn" data-a="reset">Book another</button><p style="text-align:center"><a class="link" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent("My appointment at SHADOWCUT: "+s.sv+" with "+s.st+", "+lab(s.d)+" at "+s.t+". Code "+s.code)+'">Share on WhatsApp</a></p>'}
+else if(s.k==5){h='<h2>Quest accepted</h2><div class="lv"><div class="badge">'+RK[Math.min(s.n||1,6)-1]+'</div><div><b>LEVEL UP</b><div class="xp"><i></i></div><small>+100 XP. '+RK[Math.min(s.n||1,6)-1]+'-rank hunter (saved on this phone)</small></div></div><p>You are booked. Show this code at the door.</p><p><small>Loyalty: every 5th visit is half price. Always book with the same phone number.</small></p><div class="code">'+s.code+'</div><div class="sum"><b>'+s.sv+"</b><br>"+s.st+", "+lab(s.d)+" at "+s.t+'</div><button class="btn" data-a="reset">Book another</button><p style="text-align:center"><a class="link" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent("My appointment at SHADOWCUT: "+s.sv+" with "+s.st+", "+lab(s.d)+" at "+s.t+". Code "+s.code)+'">Share on WhatsApp</a></p>'}
 else{h=bar();
 if(s.k==0)h+='<h2>Choose your arena</h2><div class="grid g2"><button class="opt big" data-a="cat" data-v="barber">Barber shop<span>Cuts, fades, beards</span></button><button class="opt big" data-a="cat" data-v="salon">Salon<span>Hair, nails, skin</span></button></div>';
 if(s.k==1)h+="<h2>Pick a service</h2><div class='grid'>"+D[s.c].s.map((x,i)=>'<button class="opt" data-a="svc" data-i="'+i+'"><span class="r">KSh '+x[1]+"</span>"+x[0]+"<small>"+x[2]+"</small></button>").join("")+"</div>"+back();
@@ -150,7 +159,7 @@ if(s.k==2)h+="<h2>Choose your stylist</h2><div class='grid'>"+D[s.c].t.map((x,i)
 if(s.k==3){h+="<h2>Pick a time</h2><div class='days'>"+days().map(d=>'<button class="opt '+(s.d==iso(d)?"sel":"")+'" data-a="day" data-v="'+iso(d)+'">'+d.toLocaleDateString("en-GB",{weekday:"short"})+"<small>"+d.getDate()+" "+d.toLocaleDateString("en-GB",{month:"short"})+"</small></button>").join("")+"</div>";
 if(s.d)h+="<p class='sub' style='text-align:left'>"+hrs(s.d)+"</p><div class='grid times'>"+slotsFor(s.d).map(t=>'<button class="opt '+(s.t==t?"sel":"")+'" data-a="time" data-v="'+t+'" '+(taken(s.d,s.st,t)||past(s.d,t)?"disabled":"")+">"+t+"</button>").join("")+"</div>";else h+="<p>Select a day to see open slots.</p>";
 h+='<div style="margin-top:14px"><button class="btn" data-a="next" '+(s.t?"":"disabled")+">Continue</button></div>"+back()}
-if(s.k==4)h+='<h2>Your details</h2><div class="sum"><b>'+s.sv+"</b> (KSh "+s.p+")<br>"+s.st+", "+lab(s.d)+" at "+s.t+'</div><input id="nm" placeholder="Your name" autocomplete="name" value="'+q(me.nm)+'"><input id="ph" placeholder="Phone number" inputmode="tel" autocomplete="tel" value="'+q(me.ph)+'"><div class="err" id="er"></div><button class="btn" data-a="ok">Confirm booking</button>'+back()}
+if(s.k==4)h+='<h2>Your details</h2><div class="sum"><b>'+s.sv+"</b> (KSh "+s.p+")<br>"+s.st+", "+lab(s.d)+" at "+s.t+'</div><input id="nm" placeholder="Your name" autocomplete="name" value="'+q(me.nm)+'"><input id="ph" placeholder="Phone number" inputmode="tel" autocomplete="tel" value="'+q(me.ph)+'"><p class="sub" style="text-align:left;margin:0 0 8px">Every 5th visit is half price. Use the same phone number each time.</p><div class="err" id="er"></div><button class="btn" data-a="ok">Confirm booking</button>'+back()}
 v.innerHTML=(NET?'<p class="err">'+NET+"</p>":"")+h;if(vn!==null&&$("#nm")){$("#nm").value=vn;$("#ph").value=vp}const kk=adm?(rep?"r":blk?"b":edt?"e":"a"):s.k;if(kk!==LK){LK=kk;v.classList.remove("in");void v.offsetWidth;v.classList.add("in")}}
 $("#v").addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b||b.disabled)return;const a=b.dataset.a,v=b.dataset.v,i=b.dataset.i;
 if(a=="cat"){s.c=v;s.k=1}
