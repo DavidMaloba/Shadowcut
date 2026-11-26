@@ -46,6 +46,12 @@ input:focus{border-color:var(--blue);box-shadow:0 0 14px rgba(90,209,255,.4)}
 .err{color:#ff7a9c;min-height:22px}
 .burst{position:fixed;inset:0;z-index:5;pointer-events:none;opacity:0;mix-blend-mode:screen;background:radial-gradient(circle at 50% 88%,#fff 0%,#c58bff 12%,#7a1fd8 36%,transparent 66%)}.burst.go{animation:bst 1.2s ease-out}@keyframes bst{0%{opacity:0;transform:scale(.4)}25%{opacity:.95}100%{opacity:0;transform:scale(1.7)}}
 .loy{color:#ffd166;font-weight:800}
+select{width:100%;background:#0b0620;border:1px solid #3b2d78;color:var(--txt);font:600 18px Rajdhani;padding:12px;margin:0 0 10px}
+.gt{position:relative;padding:0!important;overflow:hidden}.gt img,.gt .tk{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+.gt .tk{background:radial-gradient(circle,#5b13b8,#0b0620);display:grid;place-items:center}.gt .tk:after{content:"TikTok";font:800 16px Orbitron;color:#fff;text-shadow:0 0 12px var(--glow)}
+.gt small{display:block;padding:6px 8px}.pl{position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);font-size:34px;color:#fff;text-shadow:0 0 16px var(--glow),0 0 30px var(--vio)}
+#lb{position:fixed;inset:0;z-index:25;background:rgba(5,3,13,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px;text-align:center}#lb[hidden]{display:none}
+#lb img{max-width:100%;max-height:74vh;box-shadow:0 0 40px var(--glow)}#lb iframe{width:min(92vw,360px);height:min(74vh,640px);border:0}
 .hero{position:relative;text-align:center;padding-top:150px;margin-top:-6px}
 .sil{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:210px;height:270px;pointer-events:none;-webkit-mask-image:linear-gradient(#000 62%,transparent);mask-image:linear-gradient(#000 62%,transparent)}
 .sil .g{transform-origin:100px 150px;animation:gl 2.8s ease-in-out infinite alternate}
@@ -65,18 +71,20 @@ input:focus{border-color:var(--blue);box-shadow:0 0 14px rgba(90,209,255,.4)}
 @media(prefers-reduced-motion:reduce){.aura i,h1,.burst.go,#v.in,.sil .g,.badge{animation:none}.xp i{animation:none;width:100%}}
 </style></head><body>
 <canvas id="fx"></canvas>
+<div id="lb" hidden></div>
 <div id="boot"><pre id="bt"></pre><small>Tap to skip</small></div>
 <div class="aura"><i></i><i></i><i></i></div><div class="burst" id="bst"></div>
 <main>
 <div class="hero"><svg class="sil" viewBox="0 0 200 260" aria-hidden="true"><defs><radialGradient id="ag" cx="50%" cy="55%" r="55%"><stop offset="0" stop-color="#c58bff" stop-opacity=".9"/><stop offset=".5" stop-color="#7a1fd8" stop-opacity=".5"/><stop offset="1" stop-color="#7a1fd8" stop-opacity="0"/></radialGradient></defs><ellipse class="g" cx="100" cy="150" rx="98" ry="120" fill="url(#ag)"/><path d="M100 28C80 28 69 48 72 70C58 86 44 112 40 152L36 260H164L160 152C156 112 142 86 128 70C131 48 120 28 100 28Z" fill="#06030e" stroke="#b46bff" stroke-width="1.6"/><ellipse cx="100" cy="62" rx="15" ry="19" fill="#000"/><ellipse cx="94" cy="60" rx="3.4" ry="1.8" fill="#d9b3ff"/><ellipse cx="106" cy="60" rx="3.4" ry="1.8" fill="#d9b3ff"/></svg><h1>SHADOWCUT</h1></div>
 <p class="sub">Barber &amp; Salon. Arise, freshly cut.</p>
 <div class="win"><p class="hd">[ SYSTEM ]</p><div id="v"></div></div>
+<div id="gal"></div>
 <p class="sub" style="margin:14px 0 0"><a class="link" href="tel:+254793709131">Call 0793 709 131</a> &nbsp;&nbsp; <a class="link" target="_blank" rel="noopener" href="https://wa.me/254793709131">WhatsApp us</a></p>
 <div class="foot"><button class="link" id="adm">Owner view</button><span class="sub" style="margin:0">Live booking system</span></div>
 </main>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {initializeFirestore,collection,doc,onSnapshot,writeBatch,deleteDoc,setDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {initializeFirestore,collection,doc,onSnapshot,writeBatch,deleteDoc,setDoc,query,orderBy,limit,addDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 const firebaseConfig={apiKey:"AIzaSyAidgt3rikSifEM0gnZwQ6WI9NrtW_5iy8",authDomain:"shadowcut-21fd6.firebaseapp.com",projectId:"shadowcut-21fd6",storageBucket:"shadowcut-21fd6.firebasestorage.app",messagingSenderId:"129870914394",appId:"1:129870914394:web:bd99019dc89711015b0963"};
 const app=initializeApp(firebaseConfig),db=initializeFirestore(app,{experimentalAutoDetectLongPolling:true}),auth=getAuth(app);
@@ -86,7 +94,7 @@ barber:{n:"Barber shop",s:[["Classic haircut",150,"30 min"],["Fade and beard",25
 salon:{n:"Salon",s:[["Wash and blow-dry",1200,"60 min"],["Knotless braids",3000,"3 hrs"],["Hair color",3500,"2 hrs"],["Manicure",1500,"45 min"],["Facial",3000,"50 min"]],t:[["Mira","S-rank"],["Zara","A-rank"],["Lena","B-rank"]]}};
 const T=[];for(let h=9;h<18;h++){T.push(h+":00".padStart(0));T.push(h+":30")}
 const pad=t=>t.length<5?"0"+t:t;
-let B=[],TK=new Set(),user=null,unsub=null,NET="",blk=false,bs="Kai",bd=null,edt=false,ED=null,rep=false,rp="week";const OWN="dmaloba903@gmail.com";const isOwner=()=>!!user&&user.email==OWN;
+let B=[],TK=new Set(),user=null,unsub=null,NET="",blk=false,bs="Kai",bd=null,edt=false,ED=null,rep=false,rp="week",gm=false,G=[],gf="all";const OWN="dmaloba903@gmail.com";const isOwner=()=>!!user&&user.email==OWN;
 onSnapshot(doc(db,"config","shop"),sn=>{if(sn.exists()){const c=sn.data();for(const k of ["barber","salon"])if(c[k]&&c[k].s&&c[k].t)D[k]={...D[k],s:c[k].s.map(x=>[x.n,x.p,x.d]),t:c[k].t.map(x=>[x.n,x.r||""])};R()}},()=>{});
 onSnapshot(doc(db,"config","holidays"),sn=>{HOL=sn.exists()?(sn.data().list||[]):[];R()},()=>{});
 onSnapshot(collection(db,"slots"),sn=>{TK=new Set(sn.docs.map(x=>x.id));R()},e=>{NET="Cannot read the database ("+(e.code||"error")+"). Refresh the page.";R()});
@@ -103,6 +111,24 @@ const loy=b=>{const n=vnum(b);return n%RW==0?'<br><span class="loy">Visit '+n+':
 const lyt=b=>{const n=vnum(b);return n%RW==0?" This is your visit #"+n+", so it is HALF PRICE today!":" Loyalty: visit "+n+" so far. Visit "+(n+RW-n%RW)+" is half price!"};
 const RK=["E","D","C","B","A","S"];let LK="";
 const bumpN=()=>{let n=1;try{n=(+localStorage.getItem("sc_n")||0)+1;localStorage.setItem("sc_n",n)}catch(e){}return n};
+const shrink=f=>new Promise((ok,no)=>{const r=new FileReader();r.onerror=()=>no({m:"Could not read the photo."});r.onload=()=>{const im=new Image();im.onerror=()=>no({m:"That file is not a photo."});im.onload=()=>{const w=Math.min(600,im.width),h=Math.round(im.height*w/im.width);const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(im,0,0,w,h);ok(c.toDataURL("image/jpeg",.62))};im.src=r.result};r.readAsDataURL(f)});
+const vid=u=>{let m=u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/))([\w-]{11})/);if(m)return{p:"yt",id:m[1]};m=u.match(/tiktok\.com\/.*\/video\/(\d+)/);if(m)return{p:"tt",id:m[1]};return null};
+async function gAdd(){const f=$("#gf").files[0],cap=$("#gc").value.trim().slice(0,80),lk=$("#gl").value.trim(),cat=$("#gk").value;
+NET="Adding...";R(1);
+try{const o={cat,cap,at:Date.now()};
+if(f){o.type="photo";o.src=await shrink(f)}
+else if(lk){const v=vid(lk);if(!v)throw{m:"Use a full YouTube or TikTok video link (not a short vm.tiktok link)."};o.type="video";o.vp=v.p;o.vid=v.id}
+else throw{m:"Pick a photo or paste a video link."};
+await addDoc(collection(db,"gallery"),o);NET="";R(1)}catch(e){NET=e.m||"Could not add ("+(e.code||"error")+"). Update the database rules first.";R(1)}}
+function GAL(){const g=$("#gal");if(!g)return;const L=G.filter(x=>gf=="all"||x.cat==gf);
+if(!G.length){g.innerHTML="";return}
+g.innerHTML='<div class="win" style="margin-top:22px"><p class="hd">[ OUR WORK ]</p><div class="days">'+[["all","All"],["barber","Barber"],["salon","Salon"]].map(x=>'<button class="opt '+(gf==x[0]?"sel":"")+'" data-g="f" data-v="'+x[0]+'">'+x[1]+'</button>').join("")+'</div><div class="grid g2">'+L.map(x=>'<button class="opt gt" data-g="o" data-i="'+G.indexOf(x)+'">'+(x.type=="photo"?'<img loading="lazy" alt="'+q(x.cap)+'" src="'+x.src+'">':x.vp=="yt"?'<img loading="lazy" alt="" src="https://i.ytimg.com/vi/'+x.vid+'/hqdefault.jpg"><span class="pl">&#9654;</span>':'<div class="tk"></div><span class="pl">&#9654;</span>')+(x.cap?'<small>'+q(x.cap)+'</small>':'')+'</button>').join("")+'</div></div>'}
+function GM(){return '<h2>Manage gallery</h2><div id="ed"><p class="hd">ADD A PHOTO</p><input id="gf" type="file" accept="image/*"><p class="hd">OR A VIDEO LINK (YOUTUBE OR TIKTOK)</p><input id="gl" placeholder="https://www.tiktok.com/@you/video/123...">'+'<p class="hd">DETAILS</p><input id="gc" maxlength="80" placeholder="Caption (optional)"><select id="gk"><option value="barber">Barber</option><option value="salon">Salon</option></select><button class="btn" data-a="gadd">Add to gallery</button></div><p class="hd">CURRENT ITEMS ('+G.length+')</p>'+(G.length?G.map(x=>'<div class="row"><div>'+(x.type=="photo"?"Photo":"Video")+", "+x.cat+"<br><small>"+q(x.cap)+"</small></div><button class='link' data-a='gdel' data-i='"+x.id+"'>Delete</button></div>").join(""):"<p>Nothing yet.</p>")+'<p><button class="link" data-a="gx">Back to bookings</button></p>'}
+onSnapshot(query(collection(db,"gallery"),orderBy("at","desc"),limit(24)),sn=>{G=sn.docs.map(x=>({id:x.id,...x.data()}));GAL()},()=>{});
+const lb=$("#lb");
+$("#gal").addEventListener("click",e=>{const b=e.target.closest("[data-g]");if(!b)return;if(b.dataset.g=="f"){gf=b.dataset.v;GAL();return}
+const x=G[+b.dataset.i];if(!x)return;lb.innerHTML=(x.type=="photo"?'<img alt="'+q(x.cap)+'" src="'+x.src+'">':'<iframe allow="autoplay; encrypted-media; fullscreen" allowfullscreen src="'+(x.vp=="yt"?"https://www.youtube.com/embed/"+x.vid+"?autoplay=1&rel=0":"https://www.tiktok.com/embed/v2/"+x.vid)+'"></iframe>')+(x.cap?'<p>'+q(x.cap)+'</p>':'')+'<button class="btn" style="width:auto;padding:10px 30px" data-x="1">Close</button>';lb.hidden=false});
+lb.addEventListener("click",e=>{if(e.target===lb||e.target.dataset.x){lb.hidden=true;lb.innerHTML=""}});
 let HOL=[];const FIX=["01-01","05-01","06-01","10-10","10-20","12-12","12-25","12-26"];
 const HRS={0:[11,0,19,30],1:[6,0,20,0],2:[8,0,20,30],3:[8,0,20,30],4:[8,0,20,30],5:[8,0,20,30],6:[10,0,19,30]};
 const isHol=d=>FIX.includes(d.slice(5))||HOL.includes(d);
@@ -143,14 +169,15 @@ function BLK(){const all0=[...D.barber.t,...D.salon.t].map(x=>x[0]);if(!all0.inc
 let h='<h2>Block off times</h2><div class="days">'+all.map(n=>'<button class="opt '+(bs==n?"sel":"")+'" data-a="bs" data-v="'+n+'">'+n+'</button>').join("")+'</div><div class="days">'+days().map(d=>'<button class="opt '+(bd==iso(d)?"sel":"")+'" data-a="bd" data-v="'+iso(d)+'">'+d.toLocaleDateString("en-GB",{weekday:"short"})+"<small>"+d.getDate()+"</small></button>").join("")+'</div><div class="grid times">';
 h+="<p>"+hrs(bd)+"</p>"+slotsFor(bd).map(t=>{const id=sid(bd,bs,t),bk=B.some(b=>b.d==bd&&b.st==bs&&b.t==t),on=TK.has(id);return '<button class="opt '+(on&&!bk?"sel":"")+'" data-a="tg" data-v="'+t+'" '+(bk?"disabled":"")+'>'+t+'<small>'+(bk?"booked":on?"blocked":"open")+'</small></button>'}).join("");
 return h+'</div><p>Tap a time to block or unblock it for the stylist and day chosen.</p><div style="margin-top:12px"><button class="btn" data-a="bday">Block whole day</button></div><p><button class="link" data-a="blkx">Back to bookings</button></p>'}
-function R(f){if(adm&&edt&&!f&&$("#ed"))return;const v=$("#v");let h="";const a1=$("#nm"),a2=$("#ph"),vn=a1?a1.value:null,vp=a2?a2.value:null;
+function R(f){if(adm&&(edt||gm)&&!f&&$("#ed"))return;const v=$("#v");let h="";const a1=$("#nm"),a2=$("#ph"),vn=a1?a1.value:null,vp=a2?a2.value:null;
 if(adm&&!isOwner()){h='<h2>Owner sign-in</h2><p>'+(user?'This account is not the owner.':'Sign in with the owner Google account to see bookings.')+'</p><button class="btn" data-a="'+(user?'out':'in')+'">'+(user?'Sign out':'Sign in with Google')+'</button><p><button class="link" data-a="exit">Back to booking</button></p>'}
+else if(adm&&gm){h=GM()}
 else if(adm&&rep){h=REP()}
 else if(adm&&edt){h=EDT()}
 else if(adm&&blk){h=BLK()}
 else if(adm){h='<h2>Owner view: all bookings</h2><div class="sum"><b>'+B.length+'</b> bookings, expected income <b>KSh '+B.reduce((a,b)=>a+eff(b),0)+'</b></div>';const L=[...B].sort((a,b)=>(a.d+pad(a.t)).localeCompare(b.d+pad(b.t)));
 h+=L.length?L.map((b,i)=>'<div class="row"><div><b>'+lab(b.d)+" "+b.t+"</b> with "+b.st+"<br>"+b.sv+" for "+b.nm+" ("+b.ph+")"+loy(b)+"</div><div><a class='link' target='_blank' rel='noopener' href='"+wa(b)+"'>WhatsApp</a><br><button class='link' data-a='del' data-i='"+B.indexOf(b)+"'>Cancel</button></div></div>").join(""):"<p>No bookings yet. New ones show up here.</p>";
-h+='<div style="margin-top:12px"><button class="btn" data-a="rep">Reports</button></div><div style="margin-top:12px"><button class="btn" data-a="blk">Block off times</button></div><div style="margin-top:12px"><button class="btn" data-a="edt">Edit services and stylists</button></div><div style="margin-top:12px"><button class="btn" data-a="exit">Back to booking</button></div><div style="margin-top:6px"><button class="link" data-a="out">Sign out</button></div>'}
+h+='<div style="margin-top:12px"><button class="btn" data-a="rep">Reports</button></div><div style="margin-top:12px"><button class="btn" data-a="gal">Manage gallery</button></div><div style="margin-top:12px"><button class="btn" data-a="blk">Block off times</button></div><div style="margin-top:12px"><button class="btn" data-a="edt">Edit services and stylists</button></div><div style="margin-top:12px"><button class="btn" data-a="exit">Back to booking</button></div><div style="margin-top:6px"><button class="link" data-a="out">Sign out</button></div>'}
 else if(s.k==5){h='<h2>Quest accepted</h2><div class="lv"><div class="badge">'+RK[Math.min(s.n||1,6)-1]+'</div><div><b>LEVEL UP</b><div class="xp"><i></i></div><small>+100 XP. '+RK[Math.min(s.n||1,6)-1]+'-rank hunter (saved on this phone)</small></div></div><p>You are booked. Show this code at the door.</p><p><small>Loyalty: every 5th visit is half price. Always book with the same phone number.</small></p><div class="code">'+s.code+'</div><div class="sum"><b>'+s.sv+"</b><br>"+s.st+", "+lab(s.d)+" at "+s.t+'</div><button class="btn" data-a="reset">Book another</button><p style="text-align:center"><a class="link" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent("My appointment at SHADOWCUT: "+s.sv+" with "+s.st+", "+lab(s.d)+" at "+s.t+". Code "+s.code)+'">Share on WhatsApp</a></p>'}
 else{h=bar();
 if(s.k==0)h+='<h2>Choose your arena</h2><div class="grid g2"><button class="opt big" data-a="cat" data-v="barber">Barber shop<span>Cuts, fades, beards</span></button><button class="opt big" data-a="cat" data-v="salon">Salon<span>Hair, nails, skin</span></button></div>';
@@ -160,7 +187,7 @@ if(s.k==3){h+="<h2>Pick a time</h2><div class='days'>"+days().map(d=>'<button cl
 if(s.d)h+="<p class='sub' style='text-align:left'>"+hrs(s.d)+"</p><div class='grid times'>"+slotsFor(s.d).map(t=>'<button class="opt '+(s.t==t?"sel":"")+'" data-a="time" data-v="'+t+'" '+(taken(s.d,s.st,t)||past(s.d,t)?"disabled":"")+">"+t+"</button>").join("")+"</div>";else h+="<p>Select a day to see open slots.</p>";
 h+='<div style="margin-top:14px"><button class="btn" data-a="next" '+(s.t?"":"disabled")+">Continue</button></div>"+back()}
 if(s.k==4)h+='<h2>Your details</h2><div class="sum"><b>'+s.sv+"</b> (KSh "+s.p+")<br>"+s.st+", "+lab(s.d)+" at "+s.t+'</div><input id="nm" placeholder="Your name" autocomplete="name" value="'+q(me.nm)+'"><input id="ph" placeholder="Phone number" inputmode="tel" autocomplete="tel" value="'+q(me.ph)+'"><p class="sub" style="text-align:left;margin:0 0 8px">Every 5th visit is half price. Use the same phone number each time.</p><div class="err" id="er"></div><button class="btn" data-a="ok">Confirm booking</button>'+back()}
-v.innerHTML=(NET?'<p class="err">'+NET+"</p>":"")+h;if(vn!==null&&$("#nm")){$("#nm").value=vn;$("#ph").value=vp}const kk=adm?(rep?"r":blk?"b":edt?"e":"a"):s.k;if(kk!==LK){LK=kk;v.classList.remove("in");void v.offsetWidth;v.classList.add("in")}}
+v.innerHTML=(NET?'<p class="err">'+NET+"</p>":"")+h;if(vn!==null&&$("#nm")){$("#nm").value=vn;$("#ph").value=vp}const kk=adm?(gm?"g":rep?"r":blk?"b":edt?"e":"a"):s.k;if(kk!==LK){LK=kk;v.classList.remove("in");void v.offsetWidth;v.classList.add("in")}}
 $("#v").addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b||b.disabled)return;const a=b.dataset.a,v=b.dataset.v,i=b.dataset.i;
 if(a=="cat"){s.c=v;s.k=1}
 else if(a=="svc"){s.sv=D[s.c].s[i][0];s.p=D[s.c].s[i][1];s.k=2}
@@ -178,6 +205,10 @@ $("#er").textContent="Booking...";
 Promise.race([bt.commit(),new Promise((_,r)=>setTimeout(()=>r({code:"timeout"}),12000))]).then(()=>{s.n=bumpN();erupt();s.k=5;R()}).catch(e=>{const c=e&&e.code||"error";const er=$("#er");if(er)er.textContent=c=="timeout"?"Cannot reach the server. Check your internet or try Chrome on another network. (timeout)":c=="permission-denied"?"That slot was just taken. Go back and pick another. (permission-denied)":"Booking failed ("+c+")."});return}
 else if(a=="reset"){s={k:0,c:null,sv:null,st:null,d:null,t:null,code:null}}
 else if(a=="del"){const b=B[+i];deleteDoc(doc(db,"bookings",b.id));deleteDoc(doc(db,"slots",sid(b.d,b.st,b.t)));return}
+else if(a=="gal"){gm=true}
+else if(a=="gx"){gm=false}
+else if(a=="gadd"){gAdd();return}
+else if(a=="gdel"){deleteDoc(doc(db,"gallery",i)).then(()=>R(1)).catch(()=>{});return}
 else if(a=="rep"){rep=true}
 else if(a=="repx"){rep=false}
 else if(a=="rp"){rp=v}
@@ -197,8 +228,8 @@ else if(a=="bd"){bd=v}
 else if(a=="tg"){const id=sid(bd,bs,v);if(TK.has(id))deleteDoc(doc(db,"slots",id));else setDoc(doc(db,"slots",id),{d:bd,st:bs,t:v});return}
 else if(a=="bday"){const bt=writeBatch(db);slotsFor(bd).forEach(x=>{const id=sid(bd,bs,x);if(!TK.has(id))bt.set(doc(db,"slots",id),{d:bd,st:bs,t:x})});bt.commit();return}
 else if(a=="in"){NET="";signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>{NET="Sign-in failed ("+(e.code||"error")+")";R()});return}
-else if(a=="out"){adm=false;edt=false;blk=false;rep=false;signOut(auth);return}
-else if(a=="exit"){adm=false;edt=false;blk=false;rep=false}
+else if(a=="out"){adm=false;edt=false;blk=false;rep=false;gm=false;signOut(auth);return}
+else if(a=="exit"){adm=false;edt=false;blk=false;rep=false;gm=false}
 R(1)});
 $("#adm").onclick=()=>{adm=!adm;R(1)};$("#v").addEventListener("input",e=>{const x=e.target.dataset;if(x.k==null||!ED)return;if(x.k=="hol"){ED.hol=e.target.value;return}ED[x.k][x.g][x.i][x.f]=x.f=="1"&&x.g=="s"?(+e.target.value||0):e.target.value});const erupt=()=>{const b=$("#bst");b.classList.remove("go");void b.offsetWidth;b.classList.add("go")};const bootEl=$("#boot");let done=false;
 const finish=()=>{if(done)return;done=true;bootEl.classList.add("off");setTimeout(()=>bootEl.remove(),700);setTimeout(erupt,150)};
